@@ -80,7 +80,22 @@ nav.tabs button[aria-current="page"]{background:var(--accent);color:var(--accent
 .cal-head{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
 .cal-head h2{font-size:1.45rem;min-width:200px}
 .cal-scroll{overflow-x:auto}
-.cal{display:grid;grid-template-columns:repeat(7,minmax(90px,1fr));border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;background:var(--card);min-width:640px}
+.cal{border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;background:var(--card);min-width:640px}
+.cal-dows,.cweek{display:grid;grid-template-columns:repeat(7,minmax(90px,1fr))}
+.cweek{row-gap:2px;border-top:1px solid var(--line);min-height:112px}
+.cday{border-right:1px solid var(--line);background:var(--card);cursor:pointer}
+.cday.last{border-right:0}
+.cday.out{background:color-mix(in srgb,var(--paper) 60%,var(--card))}
+.cday.sel{box-shadow:inset 0 0 0 2px var(--accent)}
+.cweek>:not(.cday){position:relative;z-index:1;min-width:0}
+.cweek .num{justify-self:center;margin:4px 0 2px}
+.num.is-today{background:var(--accent)!important;color:var(--accent-ink)!important}
+.num.is-out{color:var(--muted)}
+.cweek .ev{width:auto;margin:0 4px}
+.cweek .ev.cl{margin-left:0;border-top-left-radius:0;border-bottom-left-radius:0}
+.cweek .ev.cr{margin-right:0;border-top-right-radius:0;border-bottom-right-radius:0}
+.ctasks{padding:2px 4px 6px;display:flex;flex-direction:column;gap:2px;pointer-events:none}
+.ctasks>*{pointer-events:auto}
 .cal .dow{padding:6px 8px;font-size:.78rem;font-weight:700;color:var(--muted);border-bottom:1px solid var(--line);text-align:center}
 .cal .day{min-height:112px;padding:4px 4px 6px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:2px;background:var(--card);cursor:pointer;min-width:0}
 .cal .day:nth-child(7n){border-right:0}
@@ -90,7 +105,9 @@ nav.tabs button[aria-current="page"]{background:var(--accent);color:var(--accent
 .cal .today .num{background:var(--accent);color:var(--accent-ink)}
 .cal .sel{box-shadow:inset 0 0 0 2px var(--accent)}
 .ev{font-size:.76rem;line-height:1.35;padding:1px 6px;border-radius:4px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;display:block;background:var(--gc);color:var(--gi);border:0;text-align:left;width:100%}
-.ev.test::before{content:"✎ ";font-weight:800}
+.ev .evt{display:block;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.ev.test{white-space:normal}
+.ev.test::before{content:"Prüfung";display:block;font-size:.66rem;font-weight:800;letter-spacing:.02em;opacity:.9}
 .tk{font-size:.76rem;line-height:1.35;padding:1px 4px;border-radius:4px;display:flex;gap:5px;align-items:center;min-width:0;color:var(--ink)}
 .tk:hover{background:var(--accent-soft)}
 .tk span{overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
@@ -560,16 +577,29 @@ function vCal(){
   const title=m.toLocaleDateString('de-CH',{month:'long',year:'numeric'}); const t=todayISO();
   const dows=st.weekStart===1?['Mo','Di','Mi','Do','Fr','Sa','So']:['So','Mo','Di','Mi','Do','Fr','Sa'];
   const vis=S.items.filter(visible);
-  let cells='';
-  for(let i=0;i<42;i++){
-    const d=new Date(start); d.setDate(start.getDate()+i); const ds=iso(d);
-    const evs=vis.filter(x=>x.type==='event'&&occStart(x,ds));
-    const tks=vis.filter(x=>x.type==='task'&&x.date===ds&&(st.showDoneInCal||!x.done));
-    const all=[...evs.map(x=>`<button class="ev ${x.test?'test':''}" style="${gStyle(x.group)}" data-act="open" data-id="${x.id}" data-occ="${occStart(x,ds)}" title="${esc(x.title)}${x.repeat?' · '+esc(repeatLabel(x.repeat,x.date)):''}">${x.repeat?'↻ ':''}${esc(x.title)}</button>`),
-               ...tks.map(x=>`<div class="tk ${x.done?'done':''}" style="${gStyle(x.group)}"><input type="checkbox" class="tcheck sm" data-act="toggle" data-id="${x.id}" ${x.done?'checked':''} aria-label="${esc(x.title)} erledigt"><span data-act="open" data-id="${x.id}">${esc(x.title)}</span></div>`)];
-    cells+=`<div class="day ${d.getMonth()!==m.getMonth()?'out':''} ${ds===t?'today':''} ${ds===ui.selDay?'sel':''}" data-act="dayNew" data-day="${ds}">
-      <button class="num" data-act="selDay" data-day="${ds}" aria-label="${fmtD(ds)}">${d.getDate()}</button>
-      ${all.slice(0,4).join('')}${all.length>4?`<span class="more" data-act="selDay" data-day="${ds}">+${all.length-4} weitere</span>`:''}</div>`;
+  const MAXL=3, addDays=(ds,n)=>{ const d=parseISO(ds); d.setDate(d.getDate()+n); return iso(d); };
+  const evAll=vis.filter(x=>x.type==='event'); let weeks='';
+  for(let w=0;w<6;w++){
+    const days=[...Array(7)].map((_,i)=>{ const d=new Date(start); d.setDate(start.getDate()+w*7+i); return d; }), dss=days.map(iso);
+    const segs=[];
+    for(const x of evAll){ const map={};
+      dss.forEach((ds,c)=>{ const s0=occStart(x,ds); if(s0) (map[s0]=map[s0]||[]).push(c); });
+      for(const [s0,cols] of Object.entries(map)){ const span=x.endDate&&x.endDate>x.date?dayDiff(x.date,x.endDate):0;
+        segs.push({x,s0,c0:Math.min(...cols),c1:Math.max(...cols),contL:s0<dss[0],contR:addDays(s0,span)>dss[6]}); } }
+    segs.sort((a,b)=>a.c0-b.c0||(b.c1-b.c0)-(a.c1-a.c0)||a.x.title.localeCompare(b.x.title));
+    const lanes=[];
+    for(const sg of segs){ let l=0; while(lanes[l]&&lanes[l].slice(sg.c0,sg.c1+1).some(Boolean)) l++; lanes[l]=lanes[l]||Array(7).fill(false); for(let c=sg.c0;c<=sg.c1;c++) lanes[l][c]=true; sg.l=l; }
+    const L=Math.min(lanes.length,MAXL), hidden=Array(7).fill(0);
+    segs.filter(sg=>sg.l>=MAXL).forEach(sg=>{ for(let c=sg.c0;c<=sg.c1;c++) hidden[c]++; });
+    let h='';
+    days.forEach((d,c)=>{ const ds=dss[c], out=d.getMonth()!==m.getMonth();
+      h+=`<div class="cday ${out?'out':''} ${c===6?'last':''} ${ds===ui.selDay?'sel':''}" style="grid-column:${c+1};grid-row:1/-1" data-act="dayNew" data-day="${ds}"></div>
+      <button class="num ${ds===t?'is-today':''} ${out?'is-out':''}" style="grid-column:${c+1};grid-row:1" data-act="selDay" data-day="${ds}" aria-label="${fmtD(ds)}">${d.getDate()}</button>`; });
+    segs.filter(sg=>sg.l<MAXL).forEach(sg=>{ const x=sg.x;
+      h+=`<button class="ev ${x.test?'test':''} ${sg.contL?'cl':''} ${sg.contR?'cr':''}" style="${gStyle(x.group)};grid-column:${sg.c0+1}/${sg.c1+2};grid-row:${sg.l+2}" data-act="open" data-id="${x.id}" data-occ="${sg.s0}" title="${x.test?'Prüfung: ':''}${esc(x.title)}${x.endDate&&x.endDate>x.date?' · bis '+fmtD(addDays(sg.s0,dayDiff(x.date,x.endDate))):''}${x.repeat?' · '+esc(repeatLabel(x.repeat,x.date)):''}"><span class="evt">${x.repeat?'↻ ':''}${esc(x.title)}</span></button>`; });
+    days.forEach((d,c)=>{ const ds=dss[c]; const tks=vis.filter(x=>x.type==='task'&&x.date===ds&&(st.showDoneInCal||!x.done)); const show=tks.slice(0,3), more=tks.length-show.length+hidden[c];
+      h+=`<div class="ctasks" style="grid-column:${c+1};grid-row:${L+2}">${show.map(x=>`<div class="tk ${x.done?'done':''}" style="${gStyle(x.group)}"><input type="checkbox" class="tcheck sm" data-act="toggle" data-id="${x.id}" ${x.done?'checked':''} aria-label="${esc(x.title)} erledigt"><span data-act="open" data-id="${x.id}">${esc(x.title)}</span></div>`).join('')}${more>0?`<span class="more" data-act="selDay" data-day="${ds}">+${more} weitere</span>`:''}</div>`; });
+    weeks+=`<div class="cweek" style="grid-template-rows:auto ${L?`repeat(${L},auto) `:''}minmax(${Math.max(30,78-L*22)}px,1fr)">${h}</div>`;
   }
   const sel=vis.filter(x=>x.type==='event'?occStart(x,ui.selDay):x.date===ui.selDay);
   const openTasks=vis.filter(x=>x.type==='task'&&!x.done).sort((a,b)=>(a.date||'9').localeCompare(b.date||'9'));
@@ -577,12 +607,12 @@ function vCal(){
     ${groupSidebar()}
     <div>
       <div class="cal-head"><button class="btn small" data-act="calToday">Heute</button><button class="icon-btn" data-act="calPrev" aria-label="Vorheriger Monat" style="font-size:1.3rem">‹</button><button class="icon-btn" data-act="calNext" aria-label="Nächster Monat" style="font-size:1.3rem">›</button><h2>${esc(title)}</h2></div>
-      <div class="cal-scroll"><div class="cal">${dows.map(x=>`<div class="dow">${x}</div>`).join('')}${cells}</div></div>
-      <p class="muted" style="font-size:.85rem;margin:8px 2px 0">Klick auf einen leeren Bereich im Tag, um etwas einzutragen. Termine sind farbig, Aufgaben haben einen Kreis zum Abhaken. ✎ = Prüfung.</p>
+      <div class="cal-scroll"><div class="cal"><div class="cal-dows">${dows.map(x=>`<div class="dow">${x}</div>`).join('')}</div>${weeks}</div></div>
+      <p class="muted" style="font-size:.85rem;margin:8px 2px 0">Klick auf einen leeren Bereich im Tag, um etwas einzutragen. Termine sind farbig, Aufgaben haben einen Kreis zum Abhaken.</p>
     </div>
     ${st.showTaskPanel?`<div class="panel tasks-side">
       <div class="section-title">${esc(parseISO(ui.selDay).toLocaleDateString('de-CH',{weekday:'long',day:'numeric',month:'long'}))}</div>
-      ${sel.length?sel.map(x=>x.type==='event'?`<div class="task" style="--gc:${grp(x.group).color}"><span class="dot" style="background:${grp(x.group).color};margin:5px 4px 0"></span><div class="body" data-act="open" data-id="${x.id}" data-occ="${occStart(x,ui.selDay)}"><span class="tt">${x.test?'✎ ':''}${x.repeat?'↻ ':''}${esc(x.title)}</span>${x.test?`<div class="meta">${(()=>{const g=gradeOfTest(x);return g&&g.grade!=null?`Note ${gfmt(g.grade)}`:'Note noch offen';})()}</div>`:''}</div></div>`:taskRow(x,{noSubs:true})).join(''):'<div class="empty">Nichts an diesem Tag.</div>'}
+      ${sel.length?sel.map(x=>x.type==='event'?`<div class="task" style="--gc:${grp(x.group).color}"><span class="dot" style="background:${grp(x.group).color};margin:5px 4px 0"></span><div class="body" data-act="open" data-id="${x.id}" data-occ="${occStart(x,ui.selDay)}"><span class="tt">${x.test?'<b>Prüfung:</b> ':''}${x.repeat?'↻ ':''}${esc(x.title)}</span>${x.test?`<div class="meta">${(()=>{const g=gradeOfTest(x);return g&&g.grade!=null?`Note ${gfmt(g.grade)}`:'Note noch offen';})()}</div>`:''}</div></div>`:taskRow(x,{noSubs:true})).join(''):'<div class="empty">Nichts an diesem Tag.</div>'}
       <div class="section-title" style="margin-top:16px">Offene Aufgaben <span class="muted">${openTasks.length}</span></div>
       ${defaultTaskGroup()?`<div class="quick">＋<input placeholder="Aufgabe hinzufügen" data-quick="${defaultTaskGroup()}" aria-label="Aufgabe hinzufügen"></div>`:''}
       ${openTasks.slice(0,12).map(x=>taskRow(x,{showGroup:true,noSubs:true})).join('')||'<div class="empty">Alles erledigt 🎉</div>'}
@@ -605,10 +635,23 @@ function vTasks(){
         <button class="btn small" data-act="clearDone" data-id="${g.id}" style="margin:6px 4px">Erledigte löschen</button></details>`:''}
     </div>`;
   }).join('');
+  const t0=todayISO();
+  const tests=S.items.filter(i=>i.type==='event'&&i.test&&!hid.includes(i.group)).map(i=>({i,g:gradeOfTest(i)})).filter(x=>!x.g||x.g.grade==null).sort((a,b)=>(a.i.date||'').localeCompare(b.i.date||''));
+  const testRow=({i,g})=>{ const past=i.date&&i.date<=t0; const days=i.date?dayDiff(t0,i.date):null; const gc=grp(i.group).color;
+    return `<div class="task" style="--gc:${gc}"><span class="dot" style="background:${gc};margin:6px 4px 0"></span>
+      <div class="body" data-act="open" data-id="${i.id}"><span class="tt">${esc(i.title)}</span>
+        <div class="meta"><span class="datepill ${past?'late':''}">${fmtDShort(i.date)}</span>${i.subject?`<span>${esc(i.subject)}</span>`:''}${past?'<span class="open-pill">Note fehlt</span>':days!=null?`<span>in ${days} Tag${days===1?'':'en'}</span>`:''}</div></div>
+      </div>${past&&g?`<div style="display:flex;gap:6px;align-items:center;margin:0 4px 8px 30px"><input class="grade-in" inputmode="decimal" placeholder="Note" data-gradein="${g.id}" aria-label="Note für ${esc(i.title)}"><button class="btn small primary" data-act="saveGradeInline" data-gid="${g.id}">Eintragen</button></div>`:''}`; };
+  const testsCol=`<div class="panel list-col" style="--gc:var(--hl)">
+      <h3><span class="dot" style="background:var(--hl)"></span><span style="flex:1">Prüfungen</span><span class="muted" style="font-size:.9rem">${tests.length}</span></h3>
+      <p class="muted" style="font-size:.82rem;margin:0 4px 6px">Alle Prüfungen ohne Note. Sie verschwinden, sobald die Note eingetragen ist.</p>
+      ${tests.map(testRow).join('')||'<div class="empty">Keine offenen Prüfungen 🎉</div>'}
+      <div class="quick" data-act="new" data-type="event" data-test="1" style="cursor:pointer">＋ Prüfung eintragen</div>
+    </div>`;
   const hiddenNames=S.meta.groups.filter(g=>hid.includes(g.id)).map(g=>g.name);
   return `<div class="page-head"><h1>Aufgaben</h1><div style="display:flex;gap:8px"><button class="btn" data-act="grpNew">＋ Neue Gruppe</button><button class="btn primary" data-act="new" data-type="task">＋ Aufgabe</button></div></div>
   ${hiddenNames.length?`<p class="muted" style="margin-top:-6px">Ausgeblendet: ${hiddenNames.map(esc).join(', ')} (im Kalender wieder einblenden)</p>`:''}
-  <div class="lists">${cols||'<div class="panel empty">Alle Gruppen sind ausgeblendet.</div>'}</div>`;
+  <div class="lists">${testsCol}${cols}</div>`;
 }
 
 function unitCard(u){
@@ -780,7 +823,7 @@ function openItem(id,preset={}){
   const ex=id?S.items.find(i=>i.id===id):null;
   const defGroup=preset.group||S.meta.groups.find(g=>!S.meta.settings.hidden.includes(g.id))?.id||S.meta.groups[0].id;
   const typ=preset.type||'event'; const dg=typ==='task'&&!allowsTasks(grp(defGroup))?(defaultTaskGroup()||defGroup):defGroup;
-  draft=ex?JSON.parse(JSON.stringify(ex)):{id:null,kind:'fach',type:typ,title:'',date:preset.day||'',endDate:'',group:dg,desc:'',subtasks:[],done:false,test:false,subject:''};
+  draft=ex?JSON.parse(JSON.stringify(ex)):{id:null,kind:'fach',type:typ,title:'',date:preset.day||'',endDate:'',group:dg,desc:'',subtasks:[],done:false,test:!!preset.test,subject:''};
   draft._occ=ui.occ||null; ui.occ=null;
   const g=ex&&ex.test?gradeOfTest(ex):null;
   draft._sem=g?g.semesterId:S.meta.activeSem; draft._weight=g?g.weight:1; draft._grade=g&&g.grade!=null?String(g.grade):'';
@@ -1064,7 +1107,7 @@ document.addEventListener('click',e=>{
   if(act!=='dayNew') e.stopPropagation();
   switch(act){
     case 'tab': ui.tab=a.dataset.tab; render(); break;
-    case 'new': if(a.dataset.type==='task'&&!defaultTaskGroup()){ toast('Keine Gruppe erlaubt Aufgaben – schalte es bei einer Gruppe ein'); break; } openItem(null,{day:a.dataset.day,type:a.dataset.type}); break;
+    case 'new': if(a.dataset.type==='task'&&!defaultTaskGroup()){ toast('Keine Gruppe erlaubt Aufgaben – schalte es bei einer Gruppe ein'); break; } openItem(null,{day:a.dataset.day,type:a.dataset.type,test:!!a.dataset.test}); break;
     case 'dayNew': if(e.target===a){ ui.selDay=a.dataset.day; openItem(null,{day:a.dataset.day}); } break;
     case 'open': ui.occ=a.dataset.occ||null; openItem(id); break;
     case 'toggle': toggleTask(id,a.checked); break;
