@@ -120,6 +120,11 @@ details.donebox summary{cursor:pointer;color:var(--muted);font-weight:700;font-s
 /* grades */
 .chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
 .chips button{border:1px solid var(--line);background:var(--card);padding:6px 13px;border-radius:999px;font-weight:700}
+.sem-pick{position:relative;display:inline-flex}
+.sem-pick .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.sem-pick select{appearance:none;-webkit-appearance:none;border:1px solid var(--line);background:var(--card) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23888' stroke-width='2'/%3E%3C/svg%3E") no-repeat right 12px center;padding:6px 34px 6px 13px;border-radius:999px;font-weight:700;cursor:pointer;color:var(--ink)}
+.sem-pick.on select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23fff' stroke-width='2'/%3E%3C/svg%3E");background-color:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.sem-pick select option{color:var(--ink);background:var(--card)}
 .chips button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
 .g{font-family:"Bricolage Grotesque",sans-serif;font-weight:800}
 .g.good{color:var(--ok)}.g.okay{color:var(--mid)}.g.low{color:var(--bad)}
@@ -620,7 +625,12 @@ function unitCard(u){
 function statTile(label,val,sub){ return `<div class="panel"><div class="muted" style="font-size:.85rem">${label}</div><div class="g bignum ${gcls(val)}">${gfmt(val)}</div>${sub?`<div class="muted" style="font-size:.85rem;margin-top:4px">${sub}</div>`:''}</div>`; }
 function vGrades(){
   const sems=S.meta.semesters; if(!ui.gradeView) ui.gradeView=S.meta.activeSem;
-  const chips=`<div class="chips">${sems.map(s=>{const n=S.grades.filter(g=>g.semesterId===s.id&&isOpenGrade(g)).length;return `<button aria-pressed="${ui.gradeView===s.id}" data-act="gview" data-id="${s.id}">${esc(s.name)}${n?`<span class="badge">${n}</span>`:''}</button>`;}).join('')}<button aria-pressed="${ui.gradeView==='all'}" data-act="gview" data-id="all">Gesamtübersicht</button><button data-act="manage">Fächer, Module, ÜKs & Semester</button></div>`;
+  const curSem=ui.gradeView==='all'?(ui.lastSem&&sems.some(x=>x.id===ui.lastSem)?ui.lastSem:S.meta.activeSem):ui.gradeView;
+  const chips=`<div class="chips">
+    <button aria-pressed="${ui.gradeView==='all'}" data-act="gview" data-id="all">Gesamtübersicht</button>
+    <label class="sem-pick ${ui.gradeView!=='all'?'on':''}"><span class="sr">Semester</span>
+      <select data-input="gsem" aria-label="Semester wählen">${sems.map(s=>{const n=S.grades.filter(g=>g.semesterId===s.id&&isOpenGrade(g)).length;return `<option value="${s.id}" ${s.id===curSem?'selected':''}>${esc(s.name)}${s.id===S.meta.activeSem?' (aktuell)':''}${n?` · ${n} offen`:''}</option>`;}).join('')}</select></label>
+    <button data-act="manage">Fächer, Module, ÜKs & Semester</button></div>`;
   if(ui.gradeView==='all') return `<div class="page-head"><h1>Noten</h1><button class="btn primary" data-act="newGrade">＋ Note</button></div>${chips}${vOverall()}`;
   const gs=S.grades.filter(g=>g.semesterId===ui.gradeView);
   const U={fach:units(gs,'fach'),modul:units(gs,'modul'),uek:units(gs,'uek')};
@@ -1112,6 +1122,7 @@ document.addEventListener('click',e=>{
 });
 document.addEventListener('change',e=>{
   const t=e.target;
+  if(t.dataset.input==='gsem'){ ui.gradeView=t.value; ui.lastSem=t.value; render(); return; }
   if(t.id==='f_rep'||t.id==='f_repUnit'||(t.id==='f_date'&&$('#f_rep'))){ readDraft(); renderDlg(); return; }
   if(t.id==='importFile'&&t.files[0]){ importFile(t.files[0]); t.value=''; return; }
   if(t.id==='hiddenFile'){ uploadFiles([...t.files],ui.folder); t.value=''; return; }
