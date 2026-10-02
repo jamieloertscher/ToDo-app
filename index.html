@@ -127,6 +127,14 @@ nav.tabs button[aria-current="page"]{background:var(--accent);color:var(--accent
 .task:hover{background:color-mix(in srgb,var(--accent-soft) 60%,transparent)}
 .task .tcheck{margin-top:2px}
 .task .body{flex:1;min-width:0;cursor:pointer}
+.subfold{border:0;background:none;padding:1px 6px 1px 2px;border-radius:6px;font-size:.8rem;color:var(--muted);font-weight:700;cursor:pointer}
+.subfold:hover{background:var(--accent-soft);color:var(--ink)}
+.subfold .chev{display:inline-block;width:10px}
+.task .body,.subs .sub span,.peek .sub span,.sublist .sub input{min-width:0}
+.task .tt,.task .meta,.subs .sub span,.peek .sub span,.peek .tx,.tk span{overflow-wrap:anywhere;word-break:break-word}
+.subs .sub,.peek .sub{align-items:flex-start!important}
+.subs .sub .tcheck,.peek .sub .tcheck{margin-top:3px}
+.list-col,.panel{min-width:0}
 .task .tt{display:block}
 .task.done .tt{text-decoration:line-through;color:var(--muted)}
 .task .meta{font-size:.8rem;color:var(--muted);display:flex;gap:8px;flex-wrap:wrap;margin-top:2px}
@@ -589,9 +597,9 @@ function taskRow(it, opts={}){
     <div class="body" data-act="open" data-id="${it.id}">
       <span class="tt">${esc(it.title)}</span>
       ${it.desc?`<div class="meta">${esc(it.desc.slice(0,90))}</div>`:''}
-      <div class="meta">${it.date?`<span class="datepill ${late?'late':''}">${fmtDShort(it.date)}</span>`:''}${it.repeat&&!it.done?`<span title="${esc(repeatLabel(it.repeat,it.date))}">↻ ${esc(repeatLabel(it.repeat,it.date))}</span>`:''}${opts.showGroup?`<span><span class="dot" style="background:${g.color};width:8px;height:8px"></span> ${esc(g.name)}</span>`:''}</div>
+      <div class="meta">${it.date?`<span class="datepill ${late?'late':''}">${fmtDShort(it.date)}</span>`:''}${it.repeat&&!it.done?`<span title="${esc(repeatLabel(it.repeat,it.date))}">↻ ${esc(repeatLabel(it.repeat,it.date))}</span>`:''}${opts.showGroup?`<span><span class="dot" style="background:${g.color};width:8px;height:8px"></span> ${esc(g.name)}</span>`:''}${!it.done&&it.subtasks.length&&!opts.noSubs?`<button type="button" class="subfold" data-act="subFold" data-id="${it.id}" aria-expanded="${!it.collapsed}"><span class="chev">${it.collapsed?'▸':'▾'}</span> ${it.subtasks.filter(x=>x.done).length}/${it.subtasks.length} Unteraufgaben</button>`:''}</div>
     </div></div>
-    ${!it.done&&it.subtasks.length&&!opts.noSubs?`<div class="subs" style="margin-left:34px">${it.subtasks.map(s=>`<div class="sub ${s.done?'done':''}" style="--gc:${g.color}"><input type="checkbox" class="tcheck sm" data-act="subQuick" data-id="${it.id}" data-sid="${s.id}" ${s.done?'checked':''} aria-label="${esc(s.title)} erledigt"><span>${esc(s.title)}</span></div>`).join('')}</div>`:''}`;
+    ${!it.done&&it.subtasks.length&&!opts.noSubs&&!it.collapsed?`<div class="subs" style="margin-left:34px">${it.subtasks.map(s=>`<div class="sub ${s.done?'done':''}" style="--gc:${g.color}"><input type="checkbox" class="tcheck sm" data-act="subQuick" data-id="${it.id}" data-sid="${s.id}" ${s.done?'checked':''} aria-label="${esc(s.title)} erledigt"><span>${esc(s.title)}</span></div>`).join('')}</div>`:''}`;
 }
 
 function vCal(){
@@ -1186,6 +1194,7 @@ document.addEventListener('click',e=>{
     case 'open': ui.occ=a.dataset.occ||null; openItem(id); break;
     case 'peek': if(peek.id===id&&peek.occ===(a.dataset.occ||null)&&!$('#peek').hidden){ closePeek(); break; } openPeek(id,a.dataset.occ,a); break;
     case 'peekClose': closePeek(); break;
+    case 'subFold': { const it=S.items.find(i=>i.id===id); if(it){ it.collapsed=!it.collapsed; mark('items'); render(); } break; }
     case 'peekEdit': { const id2=peek.id; ui.occ=peek.occ; closePeek(); openItem(id2); break; }
     case 'peekDel': peekDelete(); break;
     case 'peekToggle': toggleTask(peek.id,a.checked); renderPeek(); break;
