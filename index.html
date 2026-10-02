@@ -288,7 +288,7 @@ function ensureDefaults(){
     cats.forEach(c=>{ const f={id:uid(),name:c,parentId:null}; m.folders.push(f); S.docs.forEach(d=>{ if(d.category===c) d.folderId=f.id; }); });
   }
   S.docs.forEach(d=>{ if(d.folderId&&!m.folders.some(f=>f.id===d.folderId)) d.folderId=null; });
-  S.grades.forEach(g=>{ if(!KINDS[g.kind]) g.kind='fach'; });
+  S.grades.forEach(g=>{ if(!KINDS[g.kind]) g.kind='fach'; if(g.kind==='uek'&&g.subject&&!/^ÜK /.test(g.subject)) g.subject=normUek(g.subject); });
   S.items.forEach(it=>{ if(it.test&&!KINDS[it.kind]) it.kind='fach'; });
   if(!m.seq) m.seq=1;
   if(!Array.isArray(m.semesters)||!m.semesters.length){ const d=new Date(),y=d.getFullYear(),mo=d.getMonth()+1; const s={id:uid(),name:mo>=8?`HS ${y}`:mo<=1?`HS ${y-1}`:`FS ${y}`}; m.semesters=[s]; m.activeSem=s.id; }
@@ -441,13 +441,59 @@ function applySettings(){
   r.setAttribute('data-size',s.size); document.body.className='bg-'+s.bg;
 }
 
+/* ---------- Wiederholungen ---------- */
+const DAY=864e5, WD=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+const dayDiff=(a,b)=>Math.round((parseISO(b)-parseISO(a))/DAY);
+const PRESETS={none:null,d1:{freq:'day',every:1},w1:{freq:'week',every:1},w2:{freq:'week',every:2},m1:{freq:'month',every:1},y1:{freq:'year',every:1}};
+function repPreset(r){ if(!r) return 'none'; const n=r.every||1; for(const [k,v] of Object.entries(PRESETS)) if(v&&v.freq===r.freq&&v.every===n) return k; return 'custom'; }
+function addInterval(ds,r){ const d=parseISO(ds), n=r.every||1;
+  if(r.freq==='day') d.setDate(d.getDate()+n);
+  else if(r.freq==='week') d.setDate(d.getDate()+7*n);
+  else { const day=d.getDate(); d.setDate(1); if(r.freq==='month') d.setMonth(d.getMonth()+n); else d.setFullYear(d.getFullYear()+n); d.setDate(Math.min(day,new Date(d.getFullYear(),d.getMonth()+1,0).getDate())); }
+  return iso(d); }
+function isStart(it,ds){
+  const r=it.repeat; if(!r) return ds===it.date;
+  if(ds<it.date||(r.until&&ds>r.until)||(it.skip||[]).includes(ds)) return false;
+  const a=parseISO(it.date), b=parseISO(ds), n=r.every||1;
+  if(r.freq==='day') return dayDiff(it.date,ds)%n===0;
+  if(r.freq==='week') return dayDiff(it.date,ds)%(7*n)===0;
+  if(r.freq==='month') return ((b.getFullYear()-a.getFullYear())*12+b.getMonth()-a.getMonth())%n===0&&b.getDate()===a.getDate();
+  return (b.getFullYear()-a.getFullYear())%n===0&&b.getMonth()===a.getMonth()&&b.getDate()===a.getDate();
+}
+// Startdatum des Vorkommens, das an ds stattfindet (oder null)
+function occStart(it,ds){
+  if(!it.date) return null;
+  const span=it.endDate&&it.endDate>it.date?dayDiff(it.date,it.endDate):0;
+  if(!it.repeat) return it.date<=ds&&(it.endDate||it.date)>=ds?it.date:null;
+  for(let k=0;k<=span;k++){ const d=parseISO(ds); d.setDate(d.getDate()-k); const st=iso(d); if(isStart(it,st)) return st; }
+  return null;
+}
+function repeatLabel(r,date){ if(!r) return ''; const n=r.every||1, d=date?parseISO(date):null;
+  const t=r.freq==='day'?(n===1?'Täglich':`Alle ${n} Tage`)
+    :r.freq==='week'?(n===1?'Wöchentlich':`Alle ${n} Wochen`)+(d?` am ${WD[d.getDay()]}`:'')
+    :r.freq==='month'?(n===1?'Monatlich':`Alle ${n} Monate`)+(d?` am ${d.getDate()}.`:'')
+    :(n===1?'Jährlich':`Alle ${n} Jahre`)+(d?` am ${d.toLocaleDateString('de-CH',{day:'numeric',month:'long'})}`:'');
+  return t+(r.until?` bis ${fmtD(r.until)}`:''); }
+function askChoice(msg,choices){
+  return new Promise(res=>{
+    const d=document.getElementById('confirmDlg');
+    d.innerHTML=`<div class="dlg-body"><p style="margin:0;font-size:1.05rem">${esc(msg)}</p></div><div class="dlg-foot"><button type="button" class="btn" data-ch="">Abbrechen</button>${choices.map(([v,l],i)=>`<button type="button" class="btn ${i===choices.length-1?'primary':''}" data-ch="${v}" ${i===choices.length-1?'style="background:var(--bad);border-color:var(--bad);color:#fff"':''}>${esc(l)}</button>`).join('')}</div>`;
+    let done=false; const fin=v=>{ if(done) return; done=true; d.close(); res(v||null); };
+    d.querySelectorAll('[data-ch]').forEach(b=>b.onclick=e=>{e.stopPropagation();fin(b.dataset.ch);});
+    d.oncancel=e=>{e.preventDefault();fin(null);};
+    d.showModal();
+  });
+}
+
 /* ---------- Grades logic ---------- */
 const gradeOfTest = it => S.grades.find(g=>g.testId===it.id);
 const semName = id => (S.meta.semesters.find(s=>s.id===id)||{}).name || '–';
 function wavg(list){ const v=list.filter(g=>g.grade!=null); const w=v.reduce((a,g)=>a+(+g.weight||1),0); return w? v.reduce((a,g)=>a+g.grade*(+g.weight||1),0)/w : null; }
 const KINDS={fach:'Fach',modul:'Modul',uek:'ÜK'};
 const KINDS_PL={fach:'Fächer',modul:'Module',uek:'ÜKs'};
-const KIND_PH={fach:'z.B. Mathematik',modul:'z.B. M164 Datenbanken erstellen',uek:'z.B. ÜK 187 Arbeitsplatz einrichten'};
+const KIND_PH={fach:'z.B. Mathematik',modul:'z.B. M164 Datenbanken erstellen',uek:'z.B. 187'};
+const KIND_LBL={fach:'Fach',modul:'Modul',uek:'ÜK-Nummer'};
+function normUek(v){ v=String(v||'').trim().replace(/^ük\s*/i,'').trim(); return v?'ÜK '+v:''; }
 const unitName=g=>g.subject||('Ohne '+KINDS[g.kind||'fach']);
 function units(gs,kind){
   const l=gs.filter(g=>(g.kind||'fach')===kind);
@@ -455,7 +501,7 @@ function units(gs,kind){
   return names.map(n=>{const gr=l.filter(g=>unitName(g)===n);return {name:n,kind,grades:gr,avg:wavg(gr)};});
 }
 const meanOf=arr=>{const v=arr.filter(x=>x!=null);return v.length?v.reduce((a,b)=>a+b,0)/v.length:null;};
-function addToCatalog(kind,name){ if(!name) return; const c=S.meta.catalog[kind||'fach']; if(!c.includes(name)){ c.push(name); mark('meta'); } }
+function addToCatalog(kind,name){ if(kind==='uek') name=normUek(name); if(!name) return; const c=S.meta.catalog[kind||'fach']; if(!c.includes(name)){ c.push(name); mark('meta'); } }
 const isOpenGrade = g => g.grade==null && g.date && g.date<=todayISO();
 const openGradeCount = () => S.grades.filter(isOpenGrade).length;
 function syncTestGrade(it, semId, weight){
@@ -499,7 +545,7 @@ function taskRow(it, opts={}){
     <div class="body" data-act="open" data-id="${it.id}">
       <span class="tt">${esc(it.title)}</span>
       ${it.desc?`<div class="meta">${esc(it.desc.slice(0,90))}</div>`:''}
-      <div class="meta">${it.date?`<span class="datepill ${late?'late':''}">${fmtDShort(it.date)}</span>`:''}${opts.showGroup?`<span><span class="dot" style="background:${g.color};width:8px;height:8px"></span> ${esc(g.name)}</span>`:''}</div>
+      <div class="meta">${it.date?`<span class="datepill ${late?'late':''}">${fmtDShort(it.date)}</span>`:''}${it.repeat&&!it.done?`<span title="${esc(repeatLabel(it.repeat,it.date))}">↻ ${esc(repeatLabel(it.repeat,it.date))}</span>`:''}${opts.showGroup?`<span><span class="dot" style="background:${g.color};width:8px;height:8px"></span> ${esc(g.name)}</span>`:''}</div>
     </div></div>
     ${!it.done&&it.subtasks.length&&!opts.noSubs?`<div class="subs" style="margin-left:34px">${it.subtasks.map(s=>`<div class="sub ${s.done?'done':''}" style="--gc:${g.color}"><input type="checkbox" class="tcheck sm" data-act="subQuick" data-id="${it.id}" data-sid="${s.id}" ${s.done?'checked':''} aria-label="${esc(s.title)} erledigt"><span>${esc(s.title)}</span></div>`).join('')}</div>`:''}`;
 }
@@ -512,15 +558,15 @@ function vCal(){
   let cells='';
   for(let i=0;i<42;i++){
     const d=new Date(start); d.setDate(start.getDate()+i); const ds=iso(d);
-    const evs=vis.filter(x=>x.type==='event'&&x.date&&x.date<=ds&&(x.endDate||x.date)>=ds);
+    const evs=vis.filter(x=>x.type==='event'&&occStart(x,ds));
     const tks=vis.filter(x=>x.type==='task'&&x.date===ds&&(st.showDoneInCal||!x.done));
-    const all=[...evs.map(x=>`<button class="ev ${x.test?'test':''}" style="${gStyle(x.group)}" data-act="open" data-id="${x.id}" title="${esc(x.title)}">${esc(x.title)}</button>`),
+    const all=[...evs.map(x=>`<button class="ev ${x.test?'test':''}" style="${gStyle(x.group)}" data-act="open" data-id="${x.id}" data-occ="${occStart(x,ds)}" title="${esc(x.title)}${x.repeat?' · '+esc(repeatLabel(x.repeat,x.date)):''}">${x.repeat?'↻ ':''}${esc(x.title)}</button>`),
                ...tks.map(x=>`<div class="tk ${x.done?'done':''}" style="${gStyle(x.group)}"><input type="checkbox" class="tcheck sm" data-act="toggle" data-id="${x.id}" ${x.done?'checked':''} aria-label="${esc(x.title)} erledigt"><span data-act="open" data-id="${x.id}">${esc(x.title)}</span></div>`)];
     cells+=`<div class="day ${d.getMonth()!==m.getMonth()?'out':''} ${ds===t?'today':''} ${ds===ui.selDay?'sel':''}" data-act="dayNew" data-day="${ds}">
       <button class="num" data-act="selDay" data-day="${ds}" aria-label="${fmtD(ds)}">${d.getDate()}</button>
       ${all.slice(0,4).join('')}${all.length>4?`<span class="more" data-act="selDay" data-day="${ds}">+${all.length-4} weitere</span>`:''}</div>`;
   }
-  const sel=vis.filter(x=>x.date&&x.date<=ui.selDay&&((x.type==='event'?x.endDate:'')||x.date)>=ui.selDay);
+  const sel=vis.filter(x=>x.type==='event'?occStart(x,ui.selDay):x.date===ui.selDay);
   const openTasks=vis.filter(x=>x.type==='task'&&!x.done).sort((a,b)=>(a.date||'9').localeCompare(b.date||'9'));
   return `<div class="cal-layout">
     ${groupSidebar()}
@@ -531,7 +577,7 @@ function vCal(){
     </div>
     ${st.showTaskPanel?`<div class="panel tasks-side">
       <div class="section-title">${esc(parseISO(ui.selDay).toLocaleDateString('de-CH',{weekday:'long',day:'numeric',month:'long'}))}</div>
-      ${sel.length?sel.map(x=>x.type==='event'?`<div class="task" style="--gc:${grp(x.group).color}"><span class="dot" style="background:${grp(x.group).color};margin:5px 4px 0"></span><div class="body" data-act="open" data-id="${x.id}"><span class="tt">${x.test?'✎ ':''}${esc(x.title)}</span>${x.test?`<div class="meta">${(()=>{const g=gradeOfTest(x);return g&&g.grade!=null?`Note ${gfmt(g.grade)}`:'Note noch offen';})()}</div>`:''}</div></div>`:taskRow(x,{noSubs:true})).join(''):'<div class="empty">Nichts an diesem Tag.</div>'}
+      ${sel.length?sel.map(x=>x.type==='event'?`<div class="task" style="--gc:${grp(x.group).color}"><span class="dot" style="background:${grp(x.group).color};margin:5px 4px 0"></span><div class="body" data-act="open" data-id="${x.id}" data-occ="${occStart(x,ui.selDay)}"><span class="tt">${x.test?'✎ ':''}${x.repeat?'↻ ':''}${esc(x.title)}</span>${x.test?`<div class="meta">${(()=>{const g=gradeOfTest(x);return g&&g.grade!=null?`Note ${gfmt(g.grade)}`:'Note noch offen';})()}</div>`:''}</div></div>`:taskRow(x,{noSubs:true})).join(''):'<div class="empty">Nichts an diesem Tag.</div>'}
       <div class="section-title" style="margin-top:16px">Offene Aufgaben <span class="muted">${openTasks.length}</span></div>
       ${defaultTaskGroup()?`<div class="quick">＋<input placeholder="Aufgabe hinzufügen" data-quick="${defaultTaskGroup()}" aria-label="Aufgabe hinzufügen"></div>`:''}
       ${openTasks.slice(0,12).map(x=>taskRow(x,{showGroup:true,noSubs:true})).join('')||'<div class="empty">Alles erledigt 🎉</div>'}
@@ -591,7 +637,12 @@ function vGrades(){
   </div>
   ${section('modul',`<span class="muted" style="font-size:.95rem">Modulschnitt <span class="g ${gcls(modAvg)}">${gfmt(modAvg)}</span></span>`)}
   ${section('fach')}
-  ${section('uek',`<span class="muted" style="font-size:.95rem">ÜK-Schnitt <span class="g ${gcls(uekAvg)}">${gfmt(uekAvg)}</span></span>`)}`
+  ${U.uek.length?`<div class="section-title" style="font-size:1.25rem;margin:26px 0 10px"><span>ÜK</span><span class="muted" style="font-size:.95rem">ÜK-Schnitt <span class="g ${gcls(uekAvg)}">${gfmt(uekAvg)}</span></span></div>
+    <div class="panel tbl-wrap"><table><thead><tr><th>ÜK-Nummer</th><th>Datum</th><th>Eingetragen</th><th class="n">Note</th></tr></thead><tbody>
+    ${U.uek.flatMap(u=>u.grades).sort((a,b)=>a.subject.localeCompare(b.subject,'de',{numeric:true})).map(g=>g.grade==null
+      ?`<tr><td><b>${esc(g.subject)}</b> ${isOpenGrade(g)?'<span class="open-pill">offen</span>':''}</td><td>${fmtD(g.date)||'–'}</td><td class="muted">–</td><td class="n" style="white-space:nowrap"><input class="grade-in" inputmode="decimal" placeholder="Note" data-gradein="${g.id}" aria-label="Note für ${esc(g.subject)}"> <button class="btn small primary" data-act="saveGradeInline" data-gid="${g.id}">Eintragen</button></td></tr>`
+      :`<tr class="clickable" data-act="editGrade" data-id="${g.id}"><td><b>${esc(g.subject)}</b></td><td>${fmtD(g.date)||'–'}</td><td class="muted">${g.enteredAt?new Date(g.enteredAt).toLocaleDateString('de-CH'):'–'}</td><td class="n g ${gcls(g.grade)}">${gfmt(g.grade)}</td></tr>`).join('')}
+    </tbody></table></div>`:''}`
   :'<div class="panel empty">Noch keine Noten in diesem Semester. Trag im Kalender eine Prüfung ein (Fach, Modul oder ÜK) oder füge hier direkt eine Note hinzu.</div>'}`;
 }
 
@@ -720,6 +771,7 @@ function openItem(id,preset={}){
   const defGroup=preset.group||S.meta.groups.find(g=>!S.meta.settings.hidden.includes(g.id))?.id||S.meta.groups[0].id;
   const typ=preset.type||'event'; const dg=typ==='task'&&!allowsTasks(grp(defGroup))?(defaultTaskGroup()||defGroup):defGroup;
   draft=ex?JSON.parse(JSON.stringify(ex)):{id:null,kind:'fach',type:typ,title:'',date:preset.day||'',endDate:'',group:dg,desc:'',subtasks:[],done:false,test:false,subject:''};
+  draft._occ=ui.occ||null; ui.occ=null;
   const g=ex&&ex.test?gradeOfTest(ex):null;
   draft._sem=g?g.semesterId:S.meta.activeSem; draft._weight=g?g.weight:1; draft._grade=g&&g.grade!=null?String(g.grade):'';
   renderDlg(); $('#dlg').showModal(); if(!ex) setTimeout(()=>$('#f_title')?.focus(),30);
@@ -731,11 +783,18 @@ function renderDlg(){
     <div class="full seg" role="group" aria-label="Art">${[['event','Termin'],['task','Aufgabe']].map(([t,l])=>`<button type="button" aria-pressed="${d.type===t}" data-act="dType" data-type="${t}">${l}</button>`).join('')}</div>
     <label>${d.type==='event'?'Datum':'Fällig am'}<input type="date" id="f_date" value="${esc(d.date)}"></label>
     ${d.type==='event'?`<label>Bis (optional)<input type="date" id="f_end" value="${esc(d.endDate||'')}"></label>`:'<span></span>'}
+    ${d.type==='event'&&d.test?'':(()=>{ const pr=d._repCustom?'custom':repPreset(d.repeat); const bd=d.date||todayISO(); const dd=parseISO(bd);
+      const opts=[['none','Nie'],['d1','Täglich'],['w1',`Wöchentlich am ${WD[dd.getDay()]}`],['w2',`Alle 2 Wochen am ${WD[dd.getDay()]}`],['m1',`Monatlich am ${dd.getDate()}.`],['y1',`Jährlich am ${dd.toLocaleDateString('de-CH',{day:'numeric',month:'long'})}`],['custom','Benutzerdefiniert…']];
+      return `<label>Wiederholen<select id="f_rep">${opts.map(([v,l])=>`<option value="${v}" ${v===pr?'selected':''}>${l}</option>`).join('')}</select></label>
+      ${d.repeat?`<label>Endet am (optional)<input type="date" id="f_until" value="${esc(d.repeat.until||'')}"></label>`:'<span></span>'}
+      ${pr==='custom'?`<label>Alle<input type="number" id="f_repN" min="1" max="99" value="${d.repeat?.every||1}"></label><label>Einheit<select id="f_repUnit">${[['day','Tage'],['week','Wochen'],['month','Monate'],['year','Jahre']].map(([v,l])=>`<option value="${v}" ${(d.repeat?.freq||'week')===v?'selected':''}>${l}</option>`).join('')}</select></label>`:''}
+      ${d.repeat&&d.type==='task'?'<p class="muted full" style="font-size:.82rem;margin:-4px 0 0">Wenn du die Aufgabe abhakst, wird automatisch die nächste erstellt.</p>':''}
+      ${d.repeat&&d.type==='event'&&d.id?'<p class="muted full" style="font-size:.82rem;margin:-4px 0 0">Änderungen gelten für die ganze Serie.</p>':''}`; })()}
     <label class="full">Gruppe<select id="f_group">${S.meta.groups.filter(x=>d.type!=='task'||allowsTasks(x)||x.id===d.group).map(x=>`<option value="${x.id}" ${x.id===d.group?'selected':''}>● ${esc(x.name)}</option>`).join('')}</select></label>
     ${d.type==='event'?`<label class="full switch"><input type="checkbox" id="f_test" data-act="dTest" ${d.test?'checked':''}> Das ist eine Prüfung – Note im Notentool erfassen</label>`:''}
     ${d.type==='event'&&d.test?`<div class="testbox"><div class="form">
       <div class="full seg" role="group" aria-label="Art der Note">${Object.entries(KINDS).map(([k,l])=>`<button type="button" aria-pressed="${(d.kind||'fach')===k}" data-act="dKind" data-k="${k}">${l}</button>`).join('')}</div>
-      <label>${KINDS[d.kind||'fach']}<input id="f_subject" list="subjList" value="${esc(d.subject||'')}" placeholder="${KIND_PH[d.kind||'fach']}"></label>
+      <label>${KIND_LBL[d.kind||'fach']}<input id="f_subject" list="subjList" value="${esc((d.kind==='uek'?String(d.subject||'').replace(/^ÜK\s*/,''):d.subject)||'')}" placeholder="${KIND_PH[d.kind||'fach']}" ${d.kind==='uek'?'inputmode="numeric"':''}></label>
       <label>Semester<select id="f_sem">${S.meta.semesters.map(s=>`<option value="${s.id}" ${s.id===d._sem?'selected':''}>${esc(s.name)}</option>`).join('')}</select></label>
       <label>Gewichtung<input type="number" id="f_weight" min="0.25" step="0.25" value="${d._weight}"></label>
       <label>Note ${g&&g.enteredAt?`<span style="font-weight:400">· eingetragen ${fmtTs(g.enteredAt)}</span>`:'<span style="font-weight:400">(später)</span>'}<input id="f_grade" inputmode="decimal" placeholder="z.B. 4.5" value="${esc(d._grade)}"></label>
@@ -753,6 +812,9 @@ function readDraft(){
   draft.title=v('f_title')??draft.title; draft.date=v('f_date')??draft.date; if($('#f_end')) draft.endDate=v('f_end');
   draft.group=v('f_group')??draft.group; draft.desc=v('f_desc')??draft.desc;
   if($('#f_test')) draft.test=$('#f_test').checked;
+  if($('#f_rep')){ const p=v('f_rep'), until=v('f_until')??draft.repeat?.until??'';
+    if(p==='custom'){ draft._repCustom=true; draft.repeat={freq:v('f_repUnit')||draft.repeat?.freq||'week',every:Math.max(1,parseInt(v('f_repN')||draft.repeat?.every||1)),until}; }
+    else { draft._repCustom=false; draft.repeat=p==='none'?null:{...PRESETS[p],until}; } }
   if($('#f_subject')) draft.subject=v('f_subject').trim(); if($('#f_sem')) draft._sem=v('f_sem'); if($('#f_weight')) draft._weight=parseFloat(v('f_weight'))||1; if($('#f_grade')) draft._grade=v('f_grade');
   document.querySelectorAll('[data-subedit]').forEach(e=>{const s=draft.subtasks.find(x=>x.id===e.dataset.subedit); if(s) s.title=e.value;});
 }
@@ -763,13 +825,16 @@ function saveItem(){
   if(draft.endDate&&draft.endDate<draft.date) draft.endDate='';
   const isTest=draft.type==='event'&&draft.test;
   let it=draft.id?S.items.find(i=>i.id===draft.id):null;
-  const clean={...draft}; ['_sem','_weight','_grade'].forEach(k=>delete clean[k]);
+  if(isTest) draft.repeat=null;
+  if(draft.repeat&&!draft.date) draft.date=todayISO();
+  if(draft.repeat&&draft.repeat.until&&draft.repeat.until<draft.date) draft.repeat.until='';
+  const clean={...draft}; ['_sem','_weight','_grade','_repCustom','_occ'].forEach(k=>delete clean[k]); if(!clean.repeat) delete clean.repeat;
   clean.subtasks=clean.type==='task'?clean.subtasks.filter(s=>s.title.trim()):[];
   if(clean.type==='task'){ clean.test=false; clean.endDate=''; }
-  if(!it){ it={...clean,id:uid(),createdAt:new Date().toISOString()}; S.items.push(it); } else Object.assign(it,clean);
+  if(!it){ it={...clean,id:uid(),createdAt:new Date().toISOString()}; S.items.push(it); } else { if(!clean.repeat) delete it.repeat; Object.assign(it,clean); }
   it.test=isTest;
   if(isTest){
-    it.kind=draft.kind||'fach'; addToCatalog(it.kind,it.subject);
+    it.kind=draft.kind||'fach'; if(it.kind==='uek'){ it.subject=normUek(it.subject); if(!it.subject){ toast('Bitte die ÜK-Nummer angeben'); return; } } addToCatalog(it.kind,it.subject);
     const g=syncTestGrade(it,draft._sem,draft._weight); const val=(draft._grade||'').trim();
     if(val!==(g.grade==null?'':String(g.grade))){ if(!setGrade(g,val)) return; if(g.grade!=null) toast(`Note ${gfmt(g.grade)} eingetragen`); }
     mark('grades');
@@ -778,6 +843,12 @@ function saveItem(){
 }
 async function deleteItem(){
   const it=S.items.find(i=>i.id===draft.id); if(!it) return; const g=it.test?gradeOfTest(it):null;
+  if(it.type==='event'&&it.repeat){
+    const ch=await askChoice(`„${it.title}“ wiederholt sich. Was möchtest du löschen?`,draft._occ?[['one',`Nur am ${fmtD(draft._occ)}`],['all','Ganze Serie']]:[['all','Ganze Serie']]);
+    if(!ch) return;
+    if(ch==='one'){ it.skip=[...(it.skip||[]),draft._occ]; mark('items'); $('#dlg').close(); render(); toast('Termin an diesem Tag gelöscht'); return; }
+    S.items=S.items.filter(i=>i!==it); mark('items'); $('#dlg').close(); render(); return;
+  }
   if(!await askConfirm(`„${it.title}“ löschen?${g&&g.grade!=null?' Die Note bleibt im Notentool erhalten.':''}`)) return;
   if(g){ if(g.grade==null) S.grades=S.grades.filter(x=>x!==g); else g.testId=null; mark('grades'); }
   S.items=S.items.filter(i=>i!==it); mark('items'); $('#dlg').close(); render();
@@ -789,7 +860,7 @@ function openGrade(id){
   const g=id?S.grades.find(x=>x.id===id):{id:null,kind:'fach',subject:'',title:'',date:todayISO(),grade:null,weight:1,semesterId:ui.gradeView&&ui.gradeView!=='all'?ui.gradeView:S.meta.activeSem};
   gd={...g,kind:g.kind||'fach',_grade:g.grade??''}; renderGradeDlg(); $('#dlg').showModal();
 }
-function readGrade(){ const v=id=>$('#'+id)?.value; if(!gd.testId){ gd.title=v('g_title')??gd.title; gd.subject=(v('g_subject')??gd.subject).trim(); gd.date=v('g_date')??gd.date; } gd.semesterId=v('g_sem')??gd.semesterId; gd.weight=parseFloat(v('g_weight'))||1; gd._grade=v('g_grade')??gd._grade; }
+function readGrade(){ const v=id=>$('#'+id)?.value; if(!gd.testId){ gd.title=v('g_title')??gd.title; gd.subject=(v('g_subject')??gd.subject).trim(); gd.date=v('g_date')??gd.date; } gd.semesterId=v('g_sem')??gd.semesterId; gd.weight=gd.kind==='uek'?1:(parseFloat(v('g_weight'))||1); gd._grade=v('g_grade')??gd._grade; }
 function renderGradeDlg(){
   const g=gd, linked=g.testId?S.items.find(i=>i.id===g.testId):null, k=g.kind||'fach';
   $('#dlg').innerHTML=`<form method="dialog" id="gradeForm"><div class="dlg-body">
@@ -797,17 +868,20 @@ function renderGradeDlg(){
     ${linked?`<p class="muted" style="margin-top:-6px">Verknüpft mit dem Kalendertermin „${esc(linked.title)}“. Titel, Datum und ${KINDS[k]} änderst du dort.</p>`:''}
     <div class="form">
       ${linked?'':`<div class="full seg" role="group" aria-label="Art der Note">${Object.entries(KINDS).map(([kk,l])=>`<button type="button" aria-pressed="${k===kk}" data-act="gKind" data-k="${kk}">${l}</button>`).join('')}</div>`}
-      <label class="full">${KINDS[k]}<input id="g_subject" list="subjList2" value="${esc(g.subject)}" placeholder="${KIND_PH[k]}" ${linked?'disabled':''}></label>
-      <label class="full">Prüfung / Bezeichnung<input id="g_title" value="${esc(g.title)}" placeholder="${k==='fach'?'z.B. Prüfung Kapitel 3':k==='modul'?'z.B. Modulprüfung':'z.B. ÜK-Kompetenznachweis'}" ${linked?'disabled':''}></label>
+      <label class="${k==='uek'?'':'full'}">${KIND_LBL[k]}${k==='uek'?' *':''}<input id="g_subject" list="subjList2" value="${esc(k==='uek'?String(g.subject||'').replace(/^ÜK\s*/,''):g.subject)}" placeholder="${KIND_PH[k]}" ${k==='uek'?'inputmode="numeric" required':''} ${linked?'disabled':''}></label>
+      ${k==='uek'?'':`<label class="full">Prüfung / Bezeichnung<input id="g_title" value="${esc(g.title)}" placeholder="${k==='fach'?'z.B. Prüfung Kapitel 3':'z.B. Modulprüfung'}" ${linked?'disabled':''}></label>`}
       <label>Geschrieben am<input type="date" id="g_date" value="${esc(g.date)}" ${linked?'disabled':''}></label>
       <label>Semester<select id="g_sem">${S.meta.semesters.map(s=>`<option value="${s.id}" ${s.id===g.semesterId?'selected':''}>${esc(s.name)}</option>`).join('')}</select></label>
-      <label>Gewichtung<input type="number" id="g_weight" min="0.25" step="0.25" value="${g.weight||1}"></label>
+      ${k==='uek'?'':`<label>Gewichtung<input type="number" id="g_weight" min="0.25" step="0.25" value="${g.weight||1}"></label>`}
       <label>Note${g.enteredAt?` <span style="font-weight:400">· eingetragen ${fmtTs(g.enteredAt)}</span>`:''}<input id="g_grade" inputmode="decimal" value="${esc(g._grade)}" placeholder="1 bis 6"></label>
-    </div><datalist id="subjList2">${S.meta.catalog[k].map(s=>`<option value="${esc(s)}">`).join('')}</datalist></div>
+    </div><datalist id="subjList2">${S.meta.catalog[k].map(s=>`<option value="${esc(k==='uek'?s.replace(/^ÜK\s*/,''):s)}">`).join('')}</datalist></div>
     <div class="dlg-foot">${g.id?'<button type="button" class="btn danger" data-act="delGrade" style="margin-right:auto">Löschen</button>':''}<button type="button" class="btn" data-act="closeDlg">Abbrechen</button><button class="btn primary">Speichern</button></div></form>`;
 }
-function saveGradeDlg(){
+async function saveGradeDlg(){
   readGrade(); let g=gd.id?S.grades.find(x=>x.id===gd.id):null; const isNew=!g;
+  if(gd.kind==='uek'&&!gd.testId){ gd.subject=normUek(gd.subject); if(!gd.subject){ toast('Bitte die ÜK-Nummer angeben'); $('#g_subject')?.focus(); return; } gd.title=gd.subject;
+    const dup=S.grades.find(x=>x.kind==='uek'&&x.subject===gd.subject&&x.id!==gd.id);
+    if(dup){ if(!await askConfirm(`${gd.subject} hat schon eine Note${dup.grade!=null?' ('+gfmt(dup.grade)+')':''}. Durch die neue ersetzen?`,'Ersetzen')) return; S.grades=S.grades.filter(x=>x!==dup); } }
   if(!gd.testId){ if(!gd.subject){ toast(`Bitte ${KINDS[gd.kind]} angeben`); return; } if(!gd.title) gd.title=gd.kind==='fach'?'Prüfung':gd.kind==='modul'?'Modulnote':'ÜK-Note'; }
   if(isNew) g={id:uid(),testId:null,grade:null,enteredAt:null};
   if(!g.testId) Object.assign(g,{kind:gd.kind,subject:gd.subject,title:gd.title,date:gd.date});
@@ -968,7 +1042,12 @@ async function delDoc(id){
 }
 
 /* ---------- Events ---------- */
-function toggleTask(id,checked){ const it=S.items.find(i=>i.id===id); if(!it) return; it.done=checked; if(checked) toast(`„${it.title}“ erledigt`); mark('items'); render(); }
+function toggleTask(id,checked){ const it=S.items.find(i=>i.id===id); if(!it) return; it.done=checked;
+  if(checked&&it.repeat&&!it.nextId){ const nd=addInterval(it.date||todayISO(),it.repeat);
+    if(!it.repeat.until||nd<=it.repeat.until){ const n=JSON.parse(JSON.stringify(it)); Object.assign(n,{id:uid(),date:nd,done:false,createdAt:new Date().toISOString(),subtasks:(it.subtasks||[]).map(s=>({...s,id:uid(),done:false}))}); delete n.nextId; S.items.push(n); it.nextId=n.id; toast(`Erledigt – nächste am ${fmtDShort(nd)}`); }
+    else toast(`„${it.title}“ erledigt – Serie beendet`); }
+  else if(!checked&&it.nextId){ const n=S.items.find(x=>x.id===it.nextId); if(n&&!n.done&&!n.nextId) S.items=S.items.filter(x=>x!==n); delete it.nextId; }
+  else if(checked) toast(`„${it.title}“ erledigt`); mark('items'); render(); }
 document.addEventListener('click',e=>{
   const tabBtn=e.target.closest('#tabs button'); if(tabBtn){ ui.tab=tabBtn.dataset.tab; render(); scrollTo(0,0); return; }
   const a=e.target.closest('[data-act]'); if(!a) return; const act=a.dataset.act, id=a.dataset.id;
@@ -977,7 +1056,7 @@ document.addEventListener('click',e=>{
     case 'tab': ui.tab=a.dataset.tab; render(); break;
     case 'new': if(a.dataset.type==='task'&&!defaultTaskGroup()){ toast('Keine Gruppe erlaubt Aufgaben – schalte es bei einer Gruppe ein'); break; } openItem(null,{day:a.dataset.day,type:a.dataset.type}); break;
     case 'dayNew': if(e.target===a){ ui.selDay=a.dataset.day; openItem(null,{day:a.dataset.day}); } break;
-    case 'open': openItem(id); break;
+    case 'open': ui.occ=a.dataset.occ||null; openItem(id); break;
     case 'toggle': toggleTask(id,a.checked); break;
     case 'subQuick': { const it=S.items.find(i=>i.id===id); const s=it.subtasks.find(x=>x.id===a.dataset.sid); s.done=a.checked; mark('items'); render(); break; }
     case 'selDay': ui.selDay=a.dataset.day; { const d=parseISO(ui.selDay); if(d.getMonth()!==ui.calMonth.getMonth()) ui.calMonth=new Date(d.getFullYear(),d.getMonth(),1); } render(); break;
@@ -1033,6 +1112,7 @@ document.addEventListener('click',e=>{
 });
 document.addEventListener('change',e=>{
   const t=e.target;
+  if(t.id==='f_rep'||t.id==='f_repUnit'||(t.id==='f_date'&&$('#f_rep'))){ readDraft(); renderDlg(); return; }
   if(t.id==='importFile'&&t.files[0]){ importFile(t.files[0]); t.value=''; return; }
   if(t.id==='hiddenFile'){ uploadFiles([...t.files],ui.folder); t.value=''; return; }
   if(t.dataset.grpvis){ const h=S.meta.settings.hidden; const i=h.indexOf(t.dataset.grpvis); if(t.checked&&i>-1) h.splice(i,1); if(!t.checked&&i<0) h.push(t.dataset.grpvis); mark('meta'); render(); }
