@@ -1,0 +1,15 @@
+{
+  "name": "Mein Heft",
+  "short_name": "Mein Heft",
+  "description": "Kalender, Aufgaben, Noten und Dokumente für Schule, Arbeit und Privates",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#F6F7FB",
+  "theme_color": "#2F4FD0",
+  "lang": "de-CH",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

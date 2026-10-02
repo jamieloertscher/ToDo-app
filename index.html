@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="de-CH">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mein Heft</title>
+<meta name="theme-color" content="#2F4FD0">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F6F7FB;--card:#FFFFFF;--ink:#18203A;--muted:#5D6685;--line:#DDE2EF;--grid:rgba(47,79,208,.06);
+  --accent:#2F4FD0;--accent-ink:#fff;--hl:#FFE14D;--hl-ink:#3A2F00;
+  --ok:#1A8A5F;--bad:#C8382F;--mid:#B7791F;--radius:10px;
+  --accent-soft:color-mix(in srgb,var(--accent) 14%,var(--card));
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#11152A;--card:#191F38;--ink:#E8EBF7;--muted:#9AA2C0;--line:#2B3352;--grid:rgba(124,149,255,.06);
+  --hl:#E5C83A;--hl-ink:#231C00;--ok:#4CC995;--bad:#FF7A70;--mid:#E2A84A;}}
+:root[data-theme="dark"]{
+  --paper:#11152A;--card:#191F38;--ink:#E8EBF7;--muted:#9AA2C0;--line:#2B3352;--grid:rgba(124,149,255,.06);
+  --hl:#E5C83A;--hl-ink:#231C00;--ok:#4CC995;--bad:#FF7A70;--mid:#E2A84A;}
+:root[data-size="large"]{font-size:18px}
+:root[data-size="small"]{font-size:14.5px}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--paper);color:var(--ink);font:1rem/1.5 "Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;min-height:100vh}
+body.bg-grid{background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:22px 22px}
+body.bg-lines{background-image:linear-gradient(var(--grid) 1px,transparent 1px);background-size:100% 26px}
+h1,h2,h3{font-family:"Bricolage Grotesque",system-ui,sans-serif;margin:0;line-height:1.15}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:color-mix(in srgb,var(--paper) 90%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.top-in{max-width:1400px;margin:0 auto;padding:10px 18px;display:flex;align-items:center;gap:16px}
+.brand{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:1.3rem;display:flex;align-items:center;gap:8px;white-space:nowrap}
+.brand i{display:inline-block;width:13px;height:21px;background:var(--accent);border-radius:3px;transform:skewX(-12deg)}
+nav.tabs{display:flex;gap:4px;overflow-x:auto;flex:1;scrollbar-width:none}
+nav.tabs button{border:0;background:none;padding:8px 14px;border-radius:999px;color:var(--muted);font-weight:700;white-space:nowrap;position:relative}
+nav.tabs button[aria-current="page"]{background:var(--accent);color:var(--accent-ink)}
+.badge{display:inline-grid;place-items:center;min-width:19px;height:19px;padding:0 5px;border-radius:999px;background:var(--hl);color:var(--hl-ink);font-size:.72rem;margin-left:5px}
+.save-state{font-size:.8rem;color:var(--muted);white-space:nowrap}
+.wrap{max-width:1400px;margin:0 auto;padding:0 18px 60px}
+.btn{border:1px solid var(--line);background:var(--card);padding:8px 14px;border-radius:8px;font-weight:700}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.danger{color:var(--bad);border-color:color-mix(in srgb,var(--bad) 40%,var(--line))}
+.btn.small{padding:4px 10px;font-size:.85rem}
+.icon-btn{border:0;background:none;color:var(--muted);padding:4px 7px;border-radius:6px;line-height:1}
+.icon-btn:hover{background:var(--accent-soft);color:var(--ink)}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px}
+.page-head{display:flex;align-items:end;justify-content:space-between;gap:12px;margin:22px 0 16px;flex-wrap:wrap}
+.page-head h1{font-size:clamp(1.6rem,3.2vw,2.2rem);font-weight:800;letter-spacing:-.02em}
+.muted{color:var(--muted)}
+.empty{color:var(--muted);padding:8px 0;font-size:.92rem}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:16px}
+.section-title{font-size:1rem;font-weight:700;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.dot{width:12px;height:12px;border-radius:50%;flex:none;display:inline-block}
+/* round task checkbox (Google Tasks style) */
+.tcheck{appearance:none;-webkit-appearance:none;width:20px;height:20px;border:2px solid var(--gc,var(--muted));border-radius:50%;margin:0;flex:none;cursor:pointer;display:grid;place-items:center;background:var(--card)}
+.tcheck:checked{background:var(--gc,var(--accent));border-color:var(--gc,var(--accent))}
+.tcheck:checked::after{content:"";width:5px;height:9px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg) translate(-1px,-1px)}
+.tcheck.sm{width:16px;height:16px}
+.tcheck.sm:checked::after{width:4px;height:7px}
+/* layout calendar */
+.cal-layout{display:grid;grid-template-columns:230px minmax(0,1fr) 300px;gap:18px;margin-top:18px;align-items:start}
+@media (max-width:1150px){.cal-layout{grid-template-columns:210px minmax(0,1fr)}.tasks-side{grid-column:1/-1}}
+@media (max-width:760px){.cal-layout{grid-template-columns:1fr}}
+.side .create{width:100%;padding:12px 16px;border-radius:16px;font-size:1rem;box-shadow:0 2px 8px rgba(0,0,0,.08);margin-bottom:18px}
+.grp{display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:7px}
+.grp:hover{background:var(--accent-soft)}
+.grp label{display:flex;align-items:center;gap:9px;flex:1;cursor:pointer;min-width:0}
+.grp label span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.grp input{width:17px;height:17px;accent-color:var(--gc);flex:none}
+.cal-head{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.cal-head h2{font-size:1.45rem;min-width:200px}
+.cal-scroll{overflow-x:auto}
+.cal{display:grid;grid-template-columns:repeat(7,minmax(90px,1fr));border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;background:var(--card);min-width:640px}
+.cal .dow{padding:6px 8px;font-size:.78rem;font-weight:700;color:var(--muted);border-bottom:1px solid var(--line);text-align:center}
+.cal .day{min-height:112px;padding:4px 4px 6px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:2px;background:var(--card);cursor:pointer;min-width:0}
+.cal .day:nth-child(7n){border-right:0}
+.cal .day.out{background:color-mix(in srgb,var(--paper) 60%,var(--card))}
+.cal .day.out .num{color:var(--muted)}
+.cal .num{font-weight:700;font-size:.8rem;width:26px;height:26px;display:grid;place-items:center;border-radius:50%;align-self:center;margin-bottom:2px;border:0;background:none}
+.cal .today .num{background:var(--accent);color:var(--accent-ink)}
+.cal .sel{box-shadow:inset 0 0 0 2px var(--accent)}
+.ev{font-size:.76rem;line-height:1.35;padding:1px 6px;border-radius:4px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;display:block;background:var(--gc);color:var(--gi);border:0;text-align:left;width:100%}
+.ev.test::before{content:"✎ ";font-weight:800}
+.tk{font-size:.76rem;line-height:1.35;padding:1px 4px;border-radius:4px;display:flex;gap:5px;align-items:center;min-width:0;color:var(--ink)}
+.tk:hover{background:var(--accent-soft)}
+.tk span{overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.tk.done span{text-decoration:line-through;color:var(--muted)}
+.more{font-size:.74rem;color:var(--muted);padding-left:5px}
+/* task rows */
+.task{display:flex;gap:10px;align-items:flex-start;padding:7px 4px;border-radius:7px}
+.task:hover{background:color-mix(in srgb,var(--accent-soft) 60%,transparent)}
+.task .tcheck{margin-top:2px}
+.task .body{flex:1;min-width:0;cursor:pointer}
+.task .tt{display:block}
+.task.done .tt{text-decoration:line-through;color:var(--muted)}
+.task .meta{font-size:.8rem;color:var(--muted);display:flex;gap:8px;flex-wrap:wrap;margin-top:2px}
+.datepill{border:1px solid var(--line);border-radius:999px;padding:0 8px;font-size:.78rem}
+.datepill.late{color:var(--bad);border-color:color-mix(in srgb,var(--bad) 45%,var(--line))}
+.subs{margin:4px 0 0 0;padding:0}
+.subs .sub{display:flex;gap:8px;align-items:center;padding:3px 0;font-size:.92rem}
+.subs .sub.done span{text-decoration:line-through;color:var(--muted)}
+.quick{display:flex;gap:8px;align-items:center;padding:7px 4px;color:var(--accent);font-weight:700}
+.quick input{flex:1;border:0;background:transparent;padding:4px 0;border-bottom:1px solid transparent;min-width:0}
+.quick input:focus{outline:none;border-bottom-color:var(--accent)}
+.quick input::placeholder{color:var(--accent);font-weight:700}
+details.donebox summary{cursor:pointer;color:var(--muted);font-weight:700;font-size:.88rem;padding:8px 4px;list-style-position:inside}
+.lists{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(300px,360px);gap:14px;overflow-x:auto;padding-bottom:8px;align-items:start}
+.list-col{border-top:4px solid var(--gc)}
+.list-col h3{font-size:1.1rem;display:flex;align-items:center;gap:8px;margin-bottom:6px}
+/* grades */
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+.chips button{border:1px solid var(--line);background:var(--card);padding:6px 13px;border-radius:999px;font-weight:700}
+.chips button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.g{font-family:"Bricolage Grotesque",sans-serif;font-weight:800}
+.g.good{color:var(--ok)}.g.okay{color:var(--mid)}.g.low{color:var(--bad)}
+.bignum{font-size:2.8rem;line-height:1}
+.open-pill{background:var(--hl);color:var(--hl-ink);font-size:.75rem;font-weight:700;padding:2px 8px;border-radius:999px;white-space:nowrap}
+.openrow{display:flex;align-items:center;gap:8px;padding:8px 10px;margin:6px 0;border-radius:8px;background:color-mix(in srgb,var(--hl) 16%,var(--card));border:1px solid color-mix(in srgb,var(--hl) 70%,var(--line))}
+.openrow .grow{flex:1;min-width:0}
+.tbl-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.93rem}
+th,td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+th{font-size:.78rem;color:var(--muted)}
+td.n,th.n{text-align:right}
+tfoot td{font-weight:700;border-bottom:0}
+tr.clickable{cursor:pointer}
+tr.clickable:hover td{background:var(--accent-soft)}
+.grade-in{width:74px;padding:5px 8px;border:1px solid var(--line);border-radius:6px;background:var(--card)}
+/* docs */
+.drop{border:2px dashed var(--line);border-radius:var(--radius);padding:16px;display:flex;gap:10px;flex-wrap:wrap;align-items:end;background:var(--card)}
+.drop label{display:flex;flex-direction:column;gap:4px;font-size:.85rem;font-weight:700;color:var(--muted)}
+.drop select{padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--paper);min-width:160px}
+.row{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--line)}
+.row:first-of-type{border-top:0}
+.row .grow{flex:1;min-width:0}.row .t{font-weight:700;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.row .s{font-size:.84rem;color:var(--muted)}
+.fx-bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.crumbs{display:flex;gap:4px;align-items:center;flex-wrap:wrap;font-weight:700;margin-bottom:12px;font-size:1.05rem}
+.crumbs button{border:0;background:none;padding:4px 8px;border-radius:6px;color:var(--muted);font-weight:700}
+.crumbs button:last-child{color:var(--ink)}
+.crumbs button.over,.crumbs button:hover{background:var(--accent-soft)}
+.fx{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);min-height:260px;padding:6px}
+.fx.dragging{outline:2px dashed var(--accent);outline-offset:-6px}
+.fx-row{display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:8px}
+.fx-row:hover{background:var(--accent-soft)}
+.fx-row.over{background:var(--accent-soft);box-shadow:inset 0 0 0 2px var(--accent)}
+.fx-row .name{flex:1;min-width:0;cursor:pointer}
+.fx-row .name b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:700}
+.fx-row .name span{font-size:.8rem;color:var(--muted)}
+.fx-row .acts{display:flex;gap:2px;opacity:.55}
+.fx-row:hover .acts,.fx-row:focus-within .acts{opacity:1}
+.folder-ico{width:38px;height:30px;border-radius:4px 8px 6px 6px;background:color-mix(in srgb,var(--accent) 70%,var(--card));position:relative;flex:none;margin:8px 0}
+.folder-ico::before{content:"";position:absolute;left:0;top:-6px;width:16px;height:8px;border-radius:4px 4px 0 0;background:inherit}
+.tree{max-height:50vh;overflow:auto}
+.tree button{display:block;width:100%;text-align:left;border:0;background:none;padding:7px 8px;border-radius:7px}
+.tree button:hover{background:var(--accent-soft)}
+.tree button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.tree button:disabled{opacity:.4;cursor:not-allowed}
+.vw{display:flex;flex-direction:column;height:100%}
+.vw-head{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line)}
+.vw-head h2{font-size:1.1rem;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vw-body{flex:1;overflow:auto;background:color-mix(in srgb,var(--line) 40%,var(--paper));padding:16px;display:flex;flex-direction:column;align-items:center;gap:14px}
+.vw-body canvas,.vw-body img{max-width:100%;height:auto;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.15);border-radius:3px}
+.vw-body pre{background:var(--card);padding:16px;border-radius:8px;width:100%;white-space:pre-wrap;margin:0}
+.doc-ico{width:38px;height:46px;border-radius:5px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font-size:.7rem;font-weight:800;flex:none}
+/* dialog */
+dialog{border:0;border-radius:16px;padding:0;width:min(600px,calc(100vw - 24px));max-height:calc(100% - 40px);background:var(--card);color:var(--ink);box-shadow:0 20px 60px rgba(0,0,0,.3)}
+dialog::backdrop{background:rgba(10,14,30,.45)}
+.dlg-body{padding:20px;overflow:auto;max-height:calc(100vh - 150px)}
+.dlg-foot{padding:14px 20px;border-top:1px solid var(--line);display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.form{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form .full{grid-column:1/-1}
+.form label{display:flex;flex-direction:column;gap:4px;font-size:.84rem;font-weight:700;color:var(--muted)}
+.form input,.form select,.form textarea{padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);font-weight:400}
+.form textarea{min-height:64px;resize:vertical}
+.title-in{font-size:1.35rem;border:0!important;border-bottom:2px solid var(--line)!important;border-radius:0!important;background:transparent!important;padding:6px 2px!important;font-family:"Bricolage Grotesque",sans-serif;font-weight:700}
+.title-in:focus{outline:none;border-bottom-color:var(--accent)!important}
+.seg{display:flex;gap:4px;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:3px}
+.seg button{flex:1;border:0;background:none;padding:7px;border-radius:7px;font-weight:700;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.switch{display:flex!important;flex-direction:row!important;align-items:center;gap:10px!important;color:var(--ink)!important;font-size:.95rem!important;cursor:pointer}
+.switch input{width:18px;height:18px;accent-color:var(--accent)}
+.testbox{grid-column:1/-1;border-radius:10px;padding:12px;background:color-mix(in srgb,var(--hl) 16%,var(--card));border:1px solid color-mix(in srgb,var(--hl) 70%,var(--line))}
+.sublist .sub{display:flex;align-items:center;gap:8px;padding:4px 0}
+.sublist .sub input[type=text]{flex:1;border:0;background:transparent;padding:4px;border-bottom:1px solid transparent}
+.sublist .sub input[type=text]:focus{border-bottom-color:var(--line);outline:none}
+.sublist .sub.done input[type=text]{text-decoration:line-through;color:var(--muted)}
+.swatches{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.sw{width:30px;height:30px;border-radius:50%;border:2px solid var(--card);box-shadow:0 0 0 1px var(--line);padding:0}
+.sw[aria-pressed="true"]{box-shadow:0 0 0 2px var(--ink)}
+.sw-custom{width:34px;height:34px;border:0;padding:0;background:none;cursor:pointer}
+.set-row{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:12px 0;border-top:1px solid var(--line);flex-wrap:wrap}
+.set-row:first-child{border-top:0}
+.set-row b{display:block}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:10px 16px;border-radius:10px;font-weight:700;z-index:100;opacity:0;transition:opacity .2s;pointer-events:none;max-width:90vw}
+.toast.on{opacity:1}
+.loading{padding:60px 0;text-align:center;color:var(--muted)}
+@media (max-width:600px){.form{grid-template-columns:1fr}.save-state{display:none}.top-in{gap:8px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body class="bg-grid">
+<header class="top"><div class="top-in">
+  <div class="brand"><i aria-hidden="true"></i>Mein Heft</div>
+  <nav class="tabs" id="tabs" aria-label="Bereiche"></nav>
+  <button class="save-state icon-btn" id="saveState" data-act="syncNow" title="Jetzt synchronisieren">Lädt…</button>
+  <button class="icon-btn" data-act="settings" aria-label="Darstellung anpassen" title="Darstellung anpassen" style="font-size:1.25rem">⚙︎</button>
+</div></header>
+<main class="wrap" id="app"><div class="loading">Deine Daten werden geladen…</div></main>
+<dialog id="dlg"></dialog>
+<input type="file" id="hiddenFile" multiple hidden>
+<dialog id="viewer" style="width:min(1000px,calc(100vw - 24px));height:calc(100% - 40px)"></dialog>
+<dialog id="confirmDlg" style="width:min(420px,calc(100vw - 24px))"></dialog>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+/* ---------- Helpers ---------- */
+function askText(title,value='',okLabel='Speichern'){
+  return new Promise(res=>{
+    const d=document.getElementById('confirmDlg');
+    d.innerHTML=`<form method="dialog" id="atForm"><div class="dlg-body"><h2 style="font-size:1.2rem;margin-bottom:12px">${esc(title)}</h2><input id="atIn" value="${esc(value)}" style="width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:8px;background:var(--paper)"></div><div class="dlg-foot"><button type="button" class="btn" id="atNo">Abbrechen</button><button class="btn primary">${esc(okLabel)}</button></div></form>`;
+    let done=false; const fin=v=>{ if(done) return; done=true; d.close(); res(v); };
+    d.querySelector('#atNo').onclick=e=>{e.stopPropagation();fin(null);};
+    d.querySelector('#atForm').onsubmit=e=>{e.preventDefault();e.stopPropagation();const v=d.querySelector('#atIn').value.trim();fin(v||null);};
+    d.oncancel=e=>{e.preventDefault();fin(null);};
+    d.showModal(); const i=d.querySelector('#atIn'); i.focus(); i.select();
+  });
+}
+function askConfirm(msg,okLabel='Löschen'){
+  return new Promise(res=>{
+    const d=document.getElementById('confirmDlg');
+    d.innerHTML=`<div class="dlg-body"><p style="margin:0;font-size:1.05rem">${esc(msg)}</p></div><div class="dlg-foot"><button type="button" class="btn" id="cfNo">Abbrechen</button><button type="button" class="btn primary" id="cfYes" style="background:var(--bad);border-color:var(--bad);color:#fff">${esc(okLabel)}</button></div>`;
+    let done=false; const fin=v=>{ if(done) return; done=true; d.close(); res(v); };
+    d.querySelector('#cfNo').onclick=e=>{e.stopPropagation();fin(false);};
+    d.querySelector('#cfYes').onclick=e=>{e.stopPropagation();fin(true);};
+    d.oncancel=e=>{e.preventDefault();fin(false);};
+    d.showModal(); d.querySelector('#cfYes').focus();
+  });
+}
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid = () => (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36)+Math.random().toString(36).slice(2));
+const pad = n => String(n).padStart(2,'0');
+const iso = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const todayISO = () => iso(new Date());
+const parseISO = s => { const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); };
+const fmtD = s => s ? parseISO(s).toLocaleDateString('de-CH',{day:'numeric',month:'numeric',year:'numeric'}) : '';
+const fmtDShort = s => { if(!s) return ''; const t=todayISO(); if(s===t) return 'Heute'; if(s===iso(new Date(Date.now()+864e5))) return 'Morgen'; return parseISO(s).toLocaleDateString('de-CH',{weekday:'short',day:'numeric',month:'short'}); };
+const fmtTs = t => t ? new Date(t).toLocaleString('de-CH',{day:'numeric',month:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
+const gfmt = n => n == null || isNaN(n) ? '–' : (Math.round(n*100)/100).toFixed(2);
+const gcls = n => n == null ? '' : n >= 5 ? 'good' : n >= 4 ? 'okay' : 'low';
+const half = n => Math.round(n*2)/2;
+function inkFor(hex){ const h=(hex||'#000').replace('#',''); const n=parseInt(h.length===3?h.split('').map(c=>c+c).join(''):h,16); const r=(n>>16)&255,g=(n>>8)&255,b=n&255; return (0.299*r+0.587*g+0.114*b)/255>0.62?'#1b1b1b':'#ffffff'; }
+function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('on'); clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove('on'),2600); }
+const PALETTE=['#2F4FD0','#0B8043','#8E24AA','#D50000','#F4511E','#F6BF26','#039BE5','#E67C73','#33B679','#616161','#3F51B5','#795548'];
+
+/* ---------- State ---------- */
+const S = {
+  items: [],   // {id,type:'event'|'task',title,date,endDate,group,desc,subtasks,done,test,subject,createdAt}
+  grades: [],  // {id,testId,subject,semesterId,title,date,grade,weight,enteredAt}
+  meta: {},
+  docs: []
+};
+
+let loaded=false;
+const ui={ folder:null, docQ:'', tab:'cal', calMonth:new Date(new Date().getFullYear(),new Date().getMonth(),1), selDay:todayISO(), gradeView:null };
+
+function ensureDefaults(){
+  if(!S.meta||typeof S.meta!=='object') S.meta={};
+  ['items','grades','docs'].forEach(k=>{ S[k]=Array.isArray(S[k])?S[k].filter(x=>x&&typeof x==='object'):[]; });
+  if(!S.meta||typeof S.meta!=='object'||Array.isArray(S.meta)) S.meta={};
+  if(Object.isFrozen(S.meta)) S.meta=JSON.parse(JSON.stringify(S.meta));
+  const m=S.meta;
+  if(!m.catalog||typeof m.catalog!=='object') m.catalog={fach:Array.isArray(m.subjects)?m.subjects:['ABU','Mathematik','Englisch','Sport'],modul:[],uek:[]};
+  ['fach','modul','uek'].forEach(k=>{ if(!Array.isArray(m.catalog[k])) m.catalog[k]=[]; });
+  delete m.subjects;
+  if(!Array.isArray(m.folders)){ m.folders=[];
+    const cats=[...new Set(S.docs.map(d=>d.category).filter(Boolean))];
+    cats.forEach(c=>{ const f={id:uid(),name:c,parentId:null}; m.folders.push(f); S.docs.forEach(d=>{ if(d.category===c) d.folderId=f.id; }); });
+  }
+  S.docs.forEach(d=>{ if(d.folderId&&!m.folders.some(f=>f.id===d.folderId)) d.folderId=null; });
+  S.grades.forEach(g=>{ if(!KINDS[g.kind]) g.kind='fach'; });
+  S.items.forEach(it=>{ if(it.test&&!KINDS[it.kind]) it.kind='fach'; });
+  if(!m.seq) m.seq=1;
+  if(!Array.isArray(m.semesters)||!m.semesters.length){ const d=new Date(),y=d.getFullYear(),mo=d.getMonth()+1; const s={id:uid(),name:mo>=8?`HS ${y}`:mo<=1?`HS ${y-1}`:`FS ${y}`}; m.semesters=[s]; m.activeSem=s.id; }
+  if(!m.activeSem) m.activeSem=m.semesters.at(-1).id;
+  if(!Array.isArray(m.groups)||!m.groups.length) m.groups=[{id:uid(),name:'Schule',color:'#2F4FD0'},{id:uid(),name:'Arbeit',color:'#0B8043'},{id:uid(),name:'Persönlich',color:'#8E24AA'}];
+  m.settings=Object.assign({theme:'system',accent:'#2F4FD0',bg:'grid',size:'normal',weekStart:1,hidden:[],showTaskPanel:true,showDoneInCal:true},m.settings||{});
+  // migrate older entries
+  const g0=m.groups[0].id;
+  S.items.forEach(it=>{
+    if(it.type==='test'){ it.type='event'; it.test=true; }
+    if(it.type==='task' && it.done==null) it.done = it.status==='done';
+    delete it.time; delete it.status; delete it.priority; delete it.key;
+    if(!it.group || !m.groups.some(g=>g.id===it.group)) it.group=g0;
+    if(!Array.isArray(it.subtasks)) it.subtasks=[];
+  });
+}
+const grp = id => S.meta.groups.find(g=>g.id===id) || S.meta.groups[0];
+const visible = it => !S.meta.settings.hidden.includes(it.group);
+const gStyle = id => { const g=grp(id); return `--gc:${g.color};--gi:${inkFor(g.color)}`; };
+
+/* ---------- Storage: privates GitHub-Repo ---------- */
+const CFG_KEY='meinheft:github', CACHE_KEY='meinheft:cache';
+let cfg=null; try{ cfg=JSON.parse(localStorage.getItem(CFG_KEY)||'null'); }catch{}
+let remoteSha=null, pendingSave=false, saving=false, saveAgain=false, saveTimer=null, known={};
+function setSave(t){ $('#saveState').textContent=t; }
+function snapshot(){ return {app:'mein-heft',version:1,items:S.items,grades:S.grades,meta:S.meta,docs:S.docs}; }
+function idsOf(d){ const m=d.meta||{}; return {items:(d.items||[]).map(x=>x.id),grades:(d.grades||[]).map(x=>x.id),docs:(d.docs||[]).map(x=>x.id),folders:(m.folders||[]).map(x=>x.id),groups:(m.groups||[]).map(x=>x.id),semesters:(m.semesters||[]).map(x=>x.id)}; }
+function cacheSave(){ try{ localStorage.setItem(CACHE_KEY,JSON.stringify({data:snapshot(),remoteSha,pendingSave,known})); }catch(e){ console.warn(e); } }
+function cacheLoad(){ try{ const c=JSON.parse(localStorage.getItem(CACHE_KEY)||'null'); if(!c) return; applyData(c.data); remoteSha=c.remoteSha||null; pendingSave=!!c.pendingSave; known=c.known||{}; }catch(e){ console.warn(e); } }
+function applyData(d){ if(!d) return; S.items=d.items||[]; S.grades=d.grades||[]; S.meta=d.meta||{}; S.docs=d.docs||[]; }
+function mark(){ if(!loaded) return; pendingSave=true; cacheSave(); setSave(navigator.onLine?'Speichert…':'Offline – wird später gespeichert'); clearTimeout(saveTimer); saveTimer=setTimeout(pushNow,1200); }
+
+const API='https://api.github.com';
+function gh(path,opts={}){ return fetch(API+path,{...opts,cache:'no-store',headers:{'Authorization':'Bearer '+cfg.token,'Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28',...(opts.headers||{})}}); }
+const cpath=p=>`/repos/${encodeURIComponent(cfg.owner)}/${encodeURIComponent(cfg.repo)}/contents/${p.split('/').map(encodeURIComponent).join('/')}`;
+function bytesToB64(bytes){ let bin=''; for(let i=0;i<bytes.length;i+=0x8000) bin+=String.fromCharCode.apply(null,bytes.subarray(i,i+0x8000)); return btoa(bin); }
+const b64Utf8=str=>bytesToB64(new TextEncoder().encode(str));
+const unB64Utf8=b=>new TextDecoder().decode(Uint8Array.from(atob(b.replace(/\s/g,'')),c=>c.charCodeAt(0)));
+class GhError extends Error{ constructor(status,msg){ super(msg); this.status=status; } }
+async function ghFail(r){ let m=''; try{ m=(await r.json()).message||''; }catch{} return new GhError(r.status,m||('HTTP '+r.status)); }
+function errText(e){ if(e.status===401) return 'Token ungültig oder abgelaufen – in den Einstellungen neu verbinden'; if(e.status===403) return 'Kein Zugriff – prüfe die Rechte deines Tokens'; if(e.status===404) return 'Repo nicht gefunden'; return 'Sync-Fehler: '+(e.message||'unbekannt'); }
+
+async function fetchRemote(){
+  const r=await gh(cpath('data.json')+'?t='+Date.now());
+  if(r.status===404) return {data:null,sha:null};
+  if(!r.ok) throw await ghFail(r);
+  const j=await r.json(); let text;
+  if(j.content&&j.encoding==='base64') text=unB64Utf8(j.content);
+  else { const rr=await gh(cpath('data.json'),{headers:{Accept:'application/vnd.github.raw'}}); if(!rr.ok) throw await ghFail(rr); text=await rr.text(); }
+  return {data:JSON.parse(text),sha:j.sha};
+}
+// Lokale Änderungen gewinnen; Neues vom anderen Gerät wird übernommen; lokal Gelöschtes bleibt gelöscht
+function unionById(local,remote,knownIds){ const have=new Set((local||[]).map(x=>x.id)), kn=new Set(knownIds||[]); return [...(local||[]),...(remote||[]).filter(x=>x&&x.id&&!have.has(x.id)&&!kn.has(x.id))]; }
+function mergeRemote(rd){
+  S.items=unionById(S.items,rd.items,known.items); S.grades=unionById(S.grades,rd.grades,known.grades); S.docs=unionById(S.docs,rd.docs,known.docs);
+  const rm=rd.meta||{};
+  S.meta.folders=unionById(S.meta.folders,rm.folders,known.folders); S.meta.groups=unionById(S.meta.groups,rm.groups,known.groups); S.meta.semesters=unionById(S.meta.semesters,rm.semesters,known.semesters);
+  if(rm.catalog&&S.meta.catalog) Object.keys(rm.catalog).forEach(k=>{ S.meta.catalog[k]=[...new Set([...(S.meta.catalog[k]||[]),...(rm.catalog[k]||[])])]; });
+  S.meta.seq=Math.max(S.meta.seq||1,rm.seq||1);
+}
+async function pushNow(){
+  if(!cfg||!pendingSave) return;
+  if(saving){ saveAgain=true; return; }
+  if(!navigator.onLine){ setSave('Offline – wird später gespeichert'); return; }
+  saving=true; setSave('Speichert…');
+  try{
+    for(let attempt=0;attempt<4;attempt++){
+      const snap=snapshot();
+      const r=await gh(cpath('data.json'),{method:'PUT',body:JSON.stringify({message:'Mein Heft: Daten aktualisiert',content:b64Utf8(JSON.stringify(snap)),...(remoteSha?{sha:remoteSha}:{})})});
+      if(r.ok){ remoteSha=(await r.json()).content.sha; known=idsOf(snap); pendingSave=false; cacheSave(); setSave('Gespeichert ✓'); return; }
+      if(r.status===409||r.status===422){ const rem=await fetchRemote(); if(rem.data){ mergeRemote(rem.data); ensureDefaults(); } remoteSha=rem.sha; continue; }
+      throw await ghFail(r);
+    }
+    throw new Error('Konflikt konnte nicht gelöst werden');
+  }catch(e){ console.error(e); setSave(errText(e)); }
+  finally{ saving=false; if(saveAgain){ saveAgain=false; if(pendingSave) setTimeout(pushNow,300); } }
+}
+async function syncNow(){
+  if(!cfg||saving) return;
+  if(!navigator.onLine){ setSave(pendingSave?'Offline – wird später gespeichert':'Offline'); return; }
+  try{
+    const rem=await fetchRemote();
+    if(!rem.data){ remoteSha=null; pendingSave=true; await pushNow(); return; }
+    if(pendingSave){ mergeRemote(rem.data); ensureDefaults(); remoteSha=rem.sha; await pushNow(); render(); return; }
+    if(rem.sha===remoteSha){ setSave('Gespeichert ✓'); return; }
+    if($('#dlg').open||$('#viewer').open||$('#confirmDlg').open) return;
+    applyData(rem.data); ensureDefaults(); applySettings(); remoteSha=rem.sha; known=idsOf(rem.data); cacheSave(); render(); setSave('Gespeichert ✓');
+  }catch(e){ console.error(e); setSave(errText(e)); }
+}
+async function init(){
+  if(!cfg){ showSetup(); return; }
+  cacheLoad(); try{ ensureDefaults(); }catch(e){ console.error(e); }
+  loaded=true; try{ applySettings(); }catch(e){ console.error(e); }
+  render(); setSave('Synchronisiert…');
+  await syncNow();
+  if(!init.wired){ init.wired=true;
+    setInterval(()=>{ if(document.visibilityState==='visible') syncNow(); },45000);
+    document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') syncNow(); else if(pendingSave) pushNow(); });
+    window.addEventListener('online',()=>syncNow());
+    window.addEventListener('offline',()=>setSave('Offline'));
+  }
+}
+
+/* ---------- Einrichtung ---------- */
+function showSetup(err,prev={}){
+  $('#tabs').innerHTML=''; setSave('');
+  $('#app').innerHTML=`<div class="panel" style="max-width:560px;margin:40px auto">
+    <h1 style="font-size:1.8rem;margin-bottom:6px">Willkommen bei Mein Heft</h1>
+    <p class="muted" style="margin-top:0">Verbinde die App einmalig pro Gerät mit deinem privaten Daten-Repo auf GitHub. Dort werden alle Termine, Aufgaben, Noten und Dokumente gespeichert.</p>
+    <form id="setupForm" class="form" style="grid-template-columns:1fr">
+      <label>GitHub-Benutzername<input id="su_owner" required autocomplete="username" value="${esc(prev.owner||cfg?.owner||'')}" placeholder="z.B. jan-mueller"></label>
+      <label>Name des Daten-Repos<input id="su_repo" required value="${esc(prev.repo||cfg?.repo||'mein-heft-daten')}"></label>
+      <label>Zugriffstoken (Fine-grained Token)<input id="su_token" required type="password" autocomplete="off" placeholder="github_pat_…"></label>
+      ${err?`<p style="color:var(--bad);margin:0"><b>${esc(err)}</b></p>`:''}
+      <button class="btn primary" style="padding:11px">Verbinden</button>
+    </form>
+    <p class="muted" style="font-size:.85rem">Das Token bleibt nur auf diesem Gerät gespeichert. Wie du es erstellst, steht in der Anleitung (ANLEITUNG.md).</p></div>`;
+}
+async function connect(owner,repo,token){
+  cfg={owner,repo,token};
+  const r=await gh(`/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`);
+  if(!r.ok){ const e=await ghFail(r); cfg=null; throw new Error(e.status===404?'Repo nicht gefunden. Stimmen Benutzername und Repo-Name, und hat das Token Zugriff auf dieses Repo?':errText(e)); }
+  const j=await r.json();
+  if(!j.private){ cfg=null; throw new Error('Dieses Repo ist öffentlich – deine Noten und Dokumente wären für alle sichtbar. Stell es auf GitHub unter Settings › Danger Zone auf „Private“.'); }
+  if(j.permissions&&!j.permissions.push){ cfg=null; throw new Error('Das Token darf nicht schreiben. Gib ihm „Contents: Read and write“.'); }
+  localStorage.setItem(CFG_KEY,JSON.stringify(cfg));
+}
+function logout(){ localStorage.removeItem(CFG_KEY); localStorage.removeItem(CACHE_KEY); location.reload(); }
+
+/* ---------- Import aus der Claude-Version ---------- */
+async function importFile(file){
+  try{
+    const d=JSON.parse(await file.text()); if(!d||!Array.isArray(d.items)||!d.meta) throw new Error('Das ist keine Mein-Heft-Exportdatei.');
+    const empty=!S.items.length&&!S.grades.length;
+    if(!empty&&!await askConfirm(`Die Datei enthält ${d.items.length} Einträge und ${(d.grades||[]).length} Noten. Zu deinen bestehenden Daten hinzufügen?`,'Hinzufügen')) return;
+    if(empty){ S.items=d.items; S.grades=d.grades||[]; S.meta={...d.meta,folders:S.meta.folders||[]}; }
+    else mergeRemote({items:d.items,grades:d.grades,meta:d.meta,docs:[]});
+    ensureDefaults(); applySettings(); mark(); if($('#dlg').open) $('#dlg').close(); render(); toast('Import abgeschlossen');
+  }catch(e){ console.error(e); toast(e.message||'Import fehlgeschlagen'); }
+}
+
+/* ---------- Settings / theme ---------- */
+function applySettings(){
+  const s=S.meta.settings, r=document.documentElement;
+  if(s.theme==='system') r.removeAttribute('data-theme'); else r.setAttribute('data-theme',s.theme);
+  r.style.setProperty('--accent',s.accent); r.style.setProperty('--accent-ink',inkFor(s.accent));
+  r.setAttribute('data-size',s.size); document.body.className='bg-'+s.bg;
+}
+
+/* ---------- Grades logic ---------- */
+const gradeOfTest = it => S.grades.find(g=>g.testId===it.id);
+const semName = id => (S.meta.semesters.find(s=>s.id===id)||{}).name || '–';
+function wavg(list){ const v=list.filter(g=>g.grade!=null); const w=v.reduce((a,g)=>a+(+g.weight||1),0); return w? v.reduce((a,g)=>a+g.grade*(+g.weight||1),0)/w : null; }
+const KINDS={fach:'Fach',modul:'Modul',uek:'ÜK'};
+const KINDS_PL={fach:'Fächer',modul:'Module',uek:'ÜKs'};
+const KIND_PH={fach:'z.B. Mathematik',modul:'z.B. M164 Datenbanken erstellen',uek:'z.B. ÜK 187 Arbeitsplatz einrichten'};
+const unitName=g=>g.subject||('Ohne '+KINDS[g.kind||'fach']);
+function units(gs,kind){
+  const l=gs.filter(g=>(g.kind||'fach')===kind);
+  const names=[...new Set(l.map(unitName))].sort((a,b)=>a.localeCompare(b,'de',{numeric:true}));
+  return names.map(n=>{const gr=l.filter(g=>unitName(g)===n);return {name:n,kind,grades:gr,avg:wavg(gr)};});
+}
+const meanOf=arr=>{const v=arr.filter(x=>x!=null);return v.length?v.reduce((a,b)=>a+b,0)/v.length:null;};
+function addToCatalog(kind,name){ if(!name) return; const c=S.meta.catalog[kind||'fach']; if(!c.includes(name)){ c.push(name); mark('meta'); } }
+const isOpenGrade = g => g.grade==null && g.date && g.date<=todayISO();
+const openGradeCount = () => S.grades.filter(isOpenGrade).length;
+function syncTestGrade(it, semId, weight){
+  let g=gradeOfTest(it);
+  if(!g){ g={id:uid(),testId:it.id,grade:null,enteredAt:null,weight:1}; S.grades.push(g); }
+  Object.assign(g,{kind:it.kind||'fach',subject:it.subject||'',title:it.title,date:it.date||'',semesterId:semId||g.semesterId||S.meta.activeSem});
+  if(weight!=null) g.weight=weight; return g;
+}
+function setGrade(g,val){
+  if(val===''||val==null){ g.grade=null; g.enteredAt=null; }
+  else { const n=parseFloat(String(val).replace(',','.')); if(isNaN(n)||n<1||n>6){ toast('Note muss zwischen 1 und 6 liegen'); return false; } g.grade=n; g.enteredAt=new Date().toISOString(); }
+  mark('grades'); return true;
+}
+
+/* ---------- Render ---------- */
+function renderTabs(){
+  const n=loaded?openGradeCount():0;
+  $('#tabs').innerHTML=[['cal','Kalender'],['tasks','Aufgaben'],['grades','Noten'],['docs','Dokumente']]
+    .map(([k,l])=>`<button data-tab="${k}" aria-current="${ui.tab===k?'page':'false'}">${l}${k==='grades'&&n?`<span class="badge" title="${n} Noten offen">${n}</span>`:''}</button>`).join('');
+}
+function render(){
+  try{ renderTabs(); }catch(e){ console.error(e); }
+  if(!loaded) return;
+  try{ $('#app').innerHTML=({cal:vCal,tasks:vTasks,grades:vGrades,docs:vDocs})[ui.tab](); if(ui.tab==='docs') wireDocs(); }
+  catch(e){ console.error(e); $('#app').innerHTML=`<div class="panel" style="margin-top:24px"><b>Diese Ansicht konnte nicht angezeigt werden.</b><p class="muted">Fehler: ${esc(e.message)}</p></div>`; }
+}
+
+function groupSidebar(){
+  const hid=S.meta.settings.hidden;
+  return `<div class="side"><button class="btn primary create" data-act="new" data-day="${ui.selDay}">＋ Erstellen</button>
+    <div class="section-title" style="padding:0 6px">Meine Gruppen <button class="icon-btn" data-act="grpNew" aria-label="Gruppe hinzufügen" title="Gruppe hinzufügen">＋</button></div>
+    ${S.meta.groups.map(g=>`<div class="grp" style="--gc:${g.color}"><label><input type="checkbox" data-grpvis="${g.id}" ${hid.includes(g.id)?'':'checked'}><span>${esc(g.name)}</span></label>
+      <button class="icon-btn" data-act="grpEdit" data-id="${g.id}" aria-label="${esc(g.name)} bearbeiten" title="Bearbeiten">✎</button></div>`).join('')}
+  </div>`;
+}
+
+function taskRow(it, opts={}){
+  const g=grp(it.group); const late=it.date&&it.date<todayISO()&&!it.done;
+  return `<div class="task ${it.done?'done':''}" style="--gc:${g.color}">
+    <input type="checkbox" class="tcheck" data-act="toggle" data-id="${it.id}" ${it.done?'checked':''} aria-label="${esc(it.title)} erledigt">
+    <div class="body" data-act="open" data-id="${it.id}">
+      <span class="tt">${esc(it.title)}</span>
+      ${it.desc?`<div class="meta">${esc(it.desc.slice(0,90))}</div>`:''}
+      <div class="meta">${it.date?`<span class="datepill ${late?'late':''}">${fmtDShort(it.date)}</span>`:''}${opts.showGroup?`<span><span class="dot" style="background:${g.color};width:8px;height:8px"></span> ${esc(g.name)}</span>`:''}</div>
+    </div></div>
+    ${!it.done&&it.subtasks.length&&!opts.noSubs?`<div class="subs" style="margin-left:34px">${it.subtasks.map(s=>`<div class="sub ${s.done?'done':''}" style="--gc:${g.color}"><input type="checkbox" class="tcheck sm" data-act="subQuick" data-id="${it.id}" data-sid="${s.id}" ${s.done?'checked':''} aria-label="${esc(s.title)} erledigt"><span>${esc(s.title)}</span></div>`).join('')}</div>`:''}`;
+}
+
+function vCal(){
+  const st=S.meta.settings, m=ui.calMonth; const start=new Date(m); start.setDate(1-((m.getDay()-st.weekStart+7)%7));
+  const title=m.toLocaleDateString('de-CH',{month:'long',year:'numeric'}); const t=todayISO();
+  const dows=st.weekStart===1?['Mo','Di','Mi','Do','Fr','Sa','So']:['So','Mo','Di','Mi','Do','Fr','Sa'];
+  const vis=S.items.filter(visible);
+  let cells='';
+  for(let i=0;i<42;i++){
+    const d=new Date(start); d.setDate(start.getDate()+i); const ds=iso(d);
+    const evs=vis.filter(x=>x.type==='event'&&x.date&&x.date<=ds&&(x.endDate||x.date)>=ds);
+    const tks=vis.filter(x=>x.type==='task'&&x.date===ds&&(st.showDoneInCal||!x.done));
+    const all=[...evs.map(x=>`<button class="ev ${x.test?'test':''}" style="${gStyle(x.group)}" data-act="open" data-id="${x.id}" title="${esc(x.title)}">${esc(x.title)}</button>`),
+               ...tks.map(x=>`<div class="tk ${x.done?'done':''}" style="${gStyle(x.group)}"><input type="checkbox" class="tcheck sm" data-act="toggle" data-id="${x.id}" ${x.done?'checked':''} aria-label="${esc(x.title)} erledigt"><span data-act="open" data-id="${x.id}">${esc(x.title)}</span></div>`)];
+    cells+=`<div class="day ${d.getMonth()!==m.getMonth()?'out':''} ${ds===t?'today':''} ${ds===ui.selDay?'sel':''}" data-act="dayNew" data-day="${ds}">
+      <button class="num" data-act="selDay" data-day="${ds}" aria-label="${fmtD(ds)}">${d.getDate()}</button>
+      ${all.slice(0,4).join('')}${all.length>4?`<span class="more" data-act="selDay" data-day="${ds}">+${all.length-4} weitere</span>`:''}</div>`;
+  }
+  const sel=vis.filter(x=>x.date&&x.date<=ui.selDay&&((x.type==='event'?x.endDate:'')||x.date)>=ui.selDay);
+  const openTasks=vis.filter(x=>x.type==='task'&&!x.done).sort((a,b)=>(a.date||'9').localeCompare(b.date||'9'));
+  return `<div class="cal-layout">
+    ${groupSidebar()}
+    <div>
+      <div class="cal-head"><button class="btn small" data-act="calToday">Heute</button><button class="icon-btn" data-act="calPrev" aria-label="Vorheriger Monat" style="font-size:1.3rem">‹</button><button class="icon-btn" data-act="calNext" aria-label="Nächster Monat" style="font-size:1.3rem">›</button><h2>${esc(title)}</h2></div>
+      <div class="cal-scroll"><div class="cal">${dows.map(x=>`<div class="dow">${x}</div>`).join('')}${cells}</div></div>
+      <p class="muted" style="font-size:.85rem;margin:8px 2px 0">Klick auf einen leeren Bereich im Tag, um etwas einzutragen. Termine sind farbig, Aufgaben haben einen Kreis zum Abhaken. ✎ = Prüfung.</p>
+    </div>
+    ${st.showTaskPanel?`<div class="panel tasks-side">
+      <div class="section-title">${esc(parseISO(ui.selDay).toLocaleDateString('de-CH',{weekday:'long',day:'numeric',month:'long'}))}</div>
+      ${sel.length?sel.map(x=>x.type==='event'?`<div class="task" style="--gc:${grp(x.group).color}"><span class="dot" style="background:${grp(x.group).color};margin:5px 4px 0"></span><div class="body" data-act="open" data-id="${x.id}"><span class="tt">${x.test?'✎ ':''}${esc(x.title)}</span>${x.test?`<div class="meta">${(()=>{const g=gradeOfTest(x);return g&&g.grade!=null?`Note ${gfmt(g.grade)}`:'Note noch offen';})()}</div>`:''}</div></div>`:taskRow(x,{noSubs:true})).join(''):'<div class="empty">Nichts an diesem Tag.</div>'}
+      <div class="section-title" style="margin-top:16px">Offene Aufgaben <span class="muted">${openTasks.length}</span></div>
+      <div class="quick">＋<input placeholder="Aufgabe hinzufügen" data-quick="${S.meta.groups.find(g=>!st.hidden.includes(g.id))?.id||S.meta.groups[0].id}" aria-label="Aufgabe hinzufügen"></div>
+      ${openTasks.slice(0,12).map(x=>taskRow(x,{showGroup:true,noSubs:true})).join('')||'<div class="empty">Alles erledigt 🎉</div>'}
+      ${openTasks.length>12?`<button class="btn small" data-act="tab" data-tab="tasks">Alle ${openTasks.length} ansehen</button>`:''}
+    </div>`:''}
+  </div>`;
+}
+
+function vTasks(){
+  const hid=S.meta.settings.hidden;
+  const cols=S.meta.groups.filter(g=>!hid.includes(g.id)).map(g=>{
+    const its=S.items.filter(i=>i.type==='task'&&i.group===g.id);
+    const open=its.filter(i=>!i.done).sort((a,b)=>(a.date||'9').localeCompare(b.date||'9')||a.createdAt.localeCompare(b.createdAt));
+    const done=its.filter(i=>i.done);
+    return `<div class="panel list-col" style="--gc:${g.color}">
+      <h3><span class="dot" style="background:${g.color}"></span><span style="flex:1">${esc(g.name)}</span><button class="icon-btn" data-act="grpEdit" data-id="${g.id}" aria-label="Gruppe bearbeiten">✎</button></h3>
+      <div class="quick">＋<input placeholder="Aufgabe hinzufügen" data-quick="${g.id}" aria-label="Aufgabe zu ${esc(g.name)} hinzufügen"></div>
+      ${open.map(i=>taskRow(i)).join('')||'<div class="empty">Keine offenen Aufgaben.</div>'}
+      ${done.length?`<details class="donebox"><summary>Erledigt (${done.length})</summary>${done.map(i=>taskRow(i)).join('')}
+        <button class="btn small" data-act="clearDone" data-id="${g.id}" style="margin:6px 4px">Erledigte löschen</button></details>`:''}
+    </div>`;
+  }).join('');
+  const hiddenNames=S.meta.groups.filter(g=>hid.includes(g.id)).map(g=>g.name);
+  return `<div class="page-head"><h1>Aufgaben</h1><div style="display:flex;gap:8px"><button class="btn" data-act="grpNew">＋ Neue Gruppe</button><button class="btn primary" data-act="new" data-type="task">＋ Aufgabe</button></div></div>
+  ${hiddenNames.length?`<p class="muted" style="margin-top:-6px">Ausgeblendet: ${hiddenNames.map(esc).join(', ')} (im Kalender wieder einblenden)</p>`:''}
+  <div class="lists">${cols||'<div class="panel empty">Alle Gruppen sind ausgeblendet.</div>'}</div>`;
+}
+
+function unitCard(u){
+  const open=u.grades.filter(g=>g.grade==null).sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+  const nOpen=open.filter(isOpenGrade).length; const done=u.grades.filter(g=>g.grade!=null).sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+  return `<div class="panel"><div class="section-title" style="font-size:1.05rem"><span>${esc(u.name)}</span><span style="display:flex;gap:8px;align-items:center">${nOpen?`<span class="open-pill">${nOpen} Note${nOpen>1?'n':''} offen</span>`:''}<span class="g ${gcls(u.avg)}" style="font-size:1.3rem">${gfmt(u.avg)}</span></span></div>
+    ${u.avg!=null?`<p class="muted" style="margin:0 0 8px;font-size:.84rem">Gerundet: <b>${half(u.avg).toFixed(1)}</b></p>`:''}
+    ${open.map(g=>`<div class="openrow"><div class="grow"><b>${esc(g.title)}</b><div class="muted" style="font-size:.82rem">${g.date>todayISO()?'Prüfung am ':'Geschrieben am '}${fmtD(g.date)||'–'}</div></div>
+      <input class="grade-in" inputmode="decimal" placeholder="Note" data-gradein="${g.id}" aria-label="Note für ${esc(g.title)}"><button class="btn small primary" data-act="saveGradeInline" data-gid="${g.id}">Eintragen</button></div>`).join('')}
+    ${done.length?`<div class="tbl-wrap"><table><thead><tr><th>Prüfung</th><th>Datum</th><th class="n">Gew.</th><th class="n">Note</th></tr></thead><tbody>
+    ${done.map(g=>`<tr class="clickable" data-act="editGrade" data-id="${g.id}"><td style="white-space:normal">${esc(g.title)}</td><td>${fmtD(g.date)||'–'}<div class="muted" style="font-size:.78rem">eingetragen ${g.enteredAt?new Date(g.enteredAt).toLocaleDateString('de-CH'):'–'}</div></td><td class="n">${g.weight||1}</td><td class="n g ${gcls(g.grade)}">${gfmt(g.grade)}</td></tr>`).join('')}
+    </tbody></table></div>`:''}</div>`;
+}
+function statTile(label,val,sub){ return `<div class="panel"><div class="muted" style="font-size:.85rem">${label}</div><div class="g bignum ${gcls(val)}">${gfmt(val)}</div>${sub?`<div class="muted" style="font-size:.85rem;margin-top:4px">${sub}</div>`:''}</div>`; }
+function vGrades(){
+  const sems=S.meta.semesters; if(!ui.gradeView) ui.gradeView=S.meta.activeSem;
+  const chips=`<div class="chips">${sems.map(s=>{const n=S.grades.filter(g=>g.semesterId===s.id&&isOpenGrade(g)).length;return `<button aria-pressed="${ui.gradeView===s.id}" data-act="gview" data-id="${s.id}">${esc(s.name)}${n?`<span class="badge">${n}</span>`:''}</button>`;}).join('')}<button aria-pressed="${ui.gradeView==='all'}" data-act="gview" data-id="all">Gesamtübersicht</button><button data-act="manage">Fächer, Module, ÜKs & Semester</button></div>`;
+  if(ui.gradeView==='all') return `<div class="page-head"><h1>Noten</h1><button class="btn primary" data-act="newGrade">＋ Note</button></div>${chips}${vOverall()}`;
+  const gs=S.grades.filter(g=>g.semesterId===ui.gradeView);
+  const U={fach:units(gs,'fach'),modul:units(gs,'modul'),uek:units(gs,'uek')};
+  const modAvg=meanOf(U.modul.map(u=>u.avg)), uekAvg=meanOf(U.uek.map(u=>u.avg));
+  const openNames=[...U.fach,...U.modul,...U.uek].filter(u=>u.grades.some(isOpenGrade));
+  const section=(k,extra)=>U[k].length?`<div class="section-title" style="font-size:1.25rem;margin:26px 0 10px"><span>${KINDS_PL[k]}</span>${extra||''}</div><div class="grid2">${U[k].map(unitCard).join('')}</div>`:'';
+  return `<div class="page-head"><div><p class="muted" style="margin:0">Semester</p><h1>${esc(semName(ui.gradeView))}</h1></div><button class="btn primary" data-act="newGrade">＋ Note</button></div>
+  ${chips}
+  ${openNames.length?`<p style="margin:-4px 0 14px">Noch offen: ${openNames.map(u=>`<b>${esc(u.name)}</b> (${u.grades.filter(isOpenGrade).length})`).join(', ')}</p>`:''}
+  ${gs.length?`<div class="grid2">
+    ${statTile('Modulschnitt',modAvg,`${U.modul.filter(u=>u.avg!=null).length} Module mit Note`)}
+    ${statTile('ÜK-Schnitt',uekAvg,`${U.uek.filter(u=>u.avg!=null).length} ÜKs mit Note`)}
+    <div class="panel"><div class="muted" style="font-size:.85rem">Fächer (einzeln)</div>${U.fach.length?U.fach.map(u=>`<div style="display:flex;justify-content:space-between;padding:3px 0"><span>${esc(u.name)}</span><span class="g ${gcls(u.avg)}">${gfmt(u.avg)}</span></div>`).join(''):'<div class="empty">Noch keine Fachnoten.</div>'}</div>
+  </div>
+  ${section('modul',`<span class="muted" style="font-size:.95rem">Modulschnitt <span class="g ${gcls(modAvg)}">${gfmt(modAvg)}</span></span>`)}
+  ${section('fach')}
+  ${section('uek',`<span class="muted" style="font-size:.95rem">ÜK-Schnitt <span class="g ${gcls(uekAvg)}">${gfmt(uekAvg)}</span></span>`)}`
+  :'<div class="panel empty">Noch keine Noten in diesem Semester. Trag im Kalender eine Prüfung ein (Fach, Modul oder ÜK) oder füge hier direkt eine Note hinzu.</div>'}`;
+}
+
+function vOverall(){
+  const sems=S.meta.semesters;
+  const all=S.grades;
+  const mods=units(all,'modul'), ueks=units(all,'uek');
+  const modAvg=meanOf(mods.map(u=>u.avg)), uekAvg=meanOf(ueks.map(u=>u.avg));
+  const fachNames=[...new Set(all.filter(g=>(g.kind||'fach')==='fach').map(unitName))].sort((a,b)=>a.localeCompare(b,'de'));
+  const fachRows=fachNames.map(n=>{const vals=sems.map(s=>wavg(all.filter(g=>(g.kind||'fach')==='fach'&&g.semesterId===s.id&&unitName(g)===n)));return {n,vals,avg:meanOf(vals)};});
+  const semOf=u=>[...new Set(u.grades.map(g=>semName(g.semesterId)))].join(', ');
+  const listTable=(arr,label,avg)=>`<div class="panel tbl-wrap"><div class="section-title" style="font-size:1.15rem">${label}<span class="muted" style="font-size:.95rem">Schnitt <span class="g ${gcls(avg)}">${gfmt(avg)}</span></span></div>
+    ${arr.length?`<table><thead><tr><th>${label==='Module'?'Modul':'ÜK'}</th><th>Semester</th><th class="n">Note</th><th class="n">Gerundet</th></tr></thead><tbody>
+    ${arr.map(u=>`<tr><td><b>${esc(u.name)}</b>${u.grades.some(isOpenGrade)?' <span class="open-pill">offen</span>':''}</td><td class="muted">${esc(semOf(u))}</td><td class="n g ${gcls(u.avg)}">${gfmt(u.avg)}</td><td class="n">${u.avg!=null?half(u.avg).toFixed(1):'–'}</td></tr>`).join('')}</tbody></table>`:'<div class="empty">Noch keine Einträge.</div>'}</div>`;
+  // chart: Modulschnitt + ÜK-Schnitt + jedes Fach pro Semester
+  const series=[{name:'Module',color:'var(--accent)',vals:sems.map(s=>meanOf(units(all.filter(g=>g.semesterId===s.id),'modul').map(u=>u.avg))),w:3.5},
+    {name:'ÜKs',color:'#F4511E',vals:sems.map(s=>meanOf(units(all.filter(g=>g.semesterId===s.id),'uek').map(u=>u.avg))),w:2.5},
+    ...fachRows.map((r,i)=>({name:r.n,color:['#0B8043','#8E24AA','#039BE5','#E67C73','#795548','#616161'][i%6],vals:r.vals,w:1.8}))].filter(x=>x.vals.some(v=>v!=null));
+  const W=600,H=220,P=34; const X=i=>P+(sems.length<=1?(W-2*P)/2:i*(W-2*P)/(sems.length-1)); const Y=v=>H-P-((v-1)/5)*(H-2*P);
+  const chart=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto" role="img" aria-label="Verlauf pro Semester">
+    ${[1,2,3,4,5,6].map(v=>`<line x1="${P}" x2="${W-P}" y1="${Y(v)}" y2="${Y(v)}" stroke="${v===4?'var(--bad)':'var(--line)'}" ${v===4?'stroke-dasharray="4 4"':''}/><text x="${P-8}" y="${Y(v)+4}" text-anchor="end" font-size="11" fill="var(--muted)">${v}</text>`).join('')}
+    ${series.map(sr=>{const pts=sr.vals.map((v,i)=>v==null?null:`${X(i)},${Y(v)}`).filter(Boolean);return `<polyline points="${pts.join(' ')}" fill="none" stroke="${sr.color}" stroke-width="${sr.w}" stroke-linejoin="round"/>${sr.vals.map((v,i)=>v==null?'':`<circle cx="${X(i)}" cy="${Y(v)}" r="4" fill="${sr.color}"><title>${esc(sr.name)}: ${gfmt(v)}</title></circle>`).join('')}`;}).join('')}
+    ${sems.map((s,i)=>`<text x="${X(i)}" y="${H-10}" text-anchor="middle" font-size="11" fill="var(--muted)">${esc(s.name)}</text>`).join('')}
+  </svg><div style="display:flex;gap:12px;flex-wrap:wrap;font-size:.82rem;margin-top:6px">${series.map(sr=>`<span><span class="dot" style="background:${sr.color};width:9px;height:9px"></span> ${esc(sr.name)}</span>`).join('')}</div>`;
+  return `<div class="grid2" style="margin-bottom:16px">
+    ${statTile('Modulschnitt (alle Semester)',modAvg,`${mods.filter(u=>u.avg!=null).length} Module · gerundet ${modAvg!=null?(Math.round(modAvg*10)/10).toFixed(1):'–'}`)}
+    ${statTile('ÜK-Schnitt (alle Semester)',uekAvg,`${ueks.filter(u=>u.avg!=null).length} ÜKs · gerundet ${uekAvg!=null?(Math.round(uekAvg*10)/10).toFixed(1):'–'}`)}
+  </div>
+  <div class="panel" style="margin-bottom:16px"><div class="section-title">Verlauf pro Semester</div><div style="max-width:820px">${series.length?chart:'<div class="empty">Noch keine Noten.</div>'}</div></div>
+  <div class="grid2" style="margin-bottom:16px">${listTable(mods,'Module',modAvg)}${listTable(ueks,'ÜKs',uekAvg)}</div>
+  <div class="panel tbl-wrap"><div class="section-title" style="font-size:1.15rem">Fächer (jedes einzeln)</div><table><thead><tr><th>Fach</th>${sems.map(s=>`<th class="n">${esc(s.name)}</th>`).join('')}<th class="n">Ø Gesamt</th><th class="n">Gerundet</th></tr></thead>
+    <tbody>${fachRows.map(r=>`<tr><td><b>${esc(r.n)}</b></td>${r.vals.map(v=>`<td class="n g ${gcls(v)}">${gfmt(v)}</td>`).join('')}<td class="n g ${gcls(r.avg)}">${gfmt(r.avg)}</td><td class="n">${r.avg!=null?half(r.avg).toFixed(1):'–'}</td></tr>`).join('')||`<tr><td colspan="${sems.length+3}" class="muted">Noch keine Fachnoten.</td></tr>`}</tbody></table></div>`;
+}
+
+const folderById=id=>S.meta.folders.find(f=>f.id===id);
+function folderPath(id){ const p=[]; let f=folderById(id); while(f){ p.unshift(f); f=folderById(f.parentId); } return p; }
+function isInside(id,ancestor){ let f=folderById(id); while(f){ if(f.id===ancestor) return true; f=folderById(f.parentId); } return false; }
+const fsize=b=>b>1e6?(b/1e6).toFixed(1)+' MB':Math.max(1,Math.round(b/1e3))+' KB';
+const ext=d=>d.contentType?.includes('pdf')?'PDF':d.contentType?.startsWith('image/')?'BILD':(d.contentType||'').includes('json')?'JSON':'TXT';
+function countIn(fid){ return S.meta.folders.filter(f=>f.parentId===fid).length+S.docs.filter(d=>(d.folderId||null)===fid).length; }
+function fileRow(d,showPath){
+  return `<div class="fx-row" draggable="true" data-drag="doc:${d.id}"><span class="doc-ico">${ext(d)}</span>
+    <div class="name" data-act="openDoc" data-id="${d.id}"><b>${esc(d.name)}</b><span>${showPath?esc(['Meine Dokumente',...folderPath(d.folderId).map(f=>f.name)].join(' / '))+' · ':''}${d.size?fsize(d.size)+' · ':''}hochgeladen ${fmtTs(d.uploadedAt)}</span></div>
+    <div class="acts"><button class="icon-btn" data-act="docRename" data-id="${d.id}" title="Umbenennen" aria-label="Umbenennen">✎</button><button class="icon-btn" data-act="docMove" data-id="${d.id}" title="Verschieben" aria-label="Verschieben">⇄</button><button class="icon-btn" data-act="delDoc" data-id="${d.id}" title="Löschen" aria-label="Löschen">✕</button></div></div>`;
+}
+function vDocs(){
+  if(ui.folder&&!folderById(ui.folder)) ui.folder=null;
+  const cur=ui.folder, path=folderPath(cur), q=ui.docQ.trim().toLowerCase();
+  const crumbs=`<div class="crumbs"><button data-act="cd" data-id="" data-drop="">Meine Dokumente</button>${path.map(f=>`<span class="muted">›</span><button data-act="cd" data-id="${f.id}" data-drop="${f.id}">${esc(f.name)}</button>`).join('')}</div>`;
+  let body;
+  if(q){
+    const hitsF=S.meta.folders.filter(f=>f.name.toLowerCase().includes(q)), hitsD=S.docs.filter(d=>d.name.toLowerCase().includes(q));
+    body=(hitsF.map(f=>`<div class="fx-row"><span class="folder-ico"></span><div class="name" data-act="cd" data-id="${f.id}"><b>${esc(f.name)}</b><span>${esc(['Meine Dokumente',...folderPath(f.parentId).map(x=>x.name)].join(' / '))}</span></div></div>`).join('')+hitsD.map(d=>fileRow(d,true)).join(''))||'<div class="empty" style="padding:16px">Nichts gefunden.</div>';
+  } else {
+    const subs=S.meta.folders.filter(f=>(f.parentId||null)===cur).sort((a,b)=>a.name.localeCompare(b.name,'de',{numeric:true}));
+    const files=S.docs.filter(d=>(d.folderId||null)===cur).sort((a,b)=>a.name.localeCompare(b.name,'de',{numeric:true}));
+    body=subs.map(f=>{const n=countIn(f.id);return `<div class="fx-row" draggable="true" data-drag="folder:${f.id}" data-drop="${f.id}"><span class="folder-ico"></span>
+      <div class="name" data-act="cd" data-id="${f.id}"><b>${esc(f.name)}</b><span>${n?n+(n===1?' Element':' Elemente'):'leer'}</span></div>
+      <div class="acts"><button class="icon-btn" data-act="folderRename" data-id="${f.id}" title="Umbenennen" aria-label="Umbenennen">✎</button><button class="icon-btn" data-act="folderMove" data-id="${f.id}" title="Verschieben" aria-label="Verschieben">⇄</button><button class="icon-btn" data-act="folderDel" data-id="${f.id}" title="Löschen" aria-label="Löschen">✕</button></div></div>`;}).join('')
+      + files.map(d=>fileRow(d,false)).join('');
+    if(!body) body=`<div class="empty" style="padding:30px 16px;text-align:center">${cur?'Dieser Ordner ist leer.':'Noch nichts hier.'}<br>Erstelle einen Ordner oder zieh Dateien hierher.</div>`;
+  }
+  return `<div class="page-head"><h1>Dokumente</h1></div>
+  <div class="fx-bar"><button class="btn primary" data-act="pickFiles">⤒ Hochladen</button><button class="btn" data-act="folderNew">＋ Neuer Ordner</button>
+    <input type="search" placeholder="Alle Dokumente durchsuchen…" value="${esc(ui.docQ)}" data-input="docQ" aria-label="Dokumente durchsuchen" style="margin-left:auto;padding:8px 11px;border:1px solid var(--line);border-radius:8px;background:var(--card);min-width:220px"></div>
+  ${q?`<div class="crumbs"><span>Suchergebnisse</span></div>`:crumbs}
+  <div class="fx" id="fx">${body}</div>
+  <p class="muted" style="font-size:.85rem">Dateien werden in deinem privaten GitHub-Repo gespeichert. Klick auf eine Datei, um sie anzusehen oder herunterzuladen. Max. 25 MB pro Datei. Ziehe Dateien oder Ordner auf einen anderen Ordner, um sie zu verschieben.</p>`;
+}
+
+function openMoveDlg(kind,id){
+  const self=kind==='folder'?folderById(id):S.docs.find(d=>d.id===id); if(!self) return;
+  const current=kind==='folder'?(self.parentId||null):(self.folderId||null);
+  let target=current;
+  const draw=()=>{
+    const rows=[]; const walk=(pid,depth)=>{ S.meta.folders.filter(f=>(f.parentId||null)===pid).sort((a,b)=>a.name.localeCompare(b.name,'de')).forEach(f=>{
+      const bad=kind==='folder'&&(f.id===id||isInside(f.id,id));
+      rows.push(`<button type="button" data-t="${f.id}" aria-pressed="${target===f.id}" ${bad?'disabled':''} style="padding-left:${10+depth*20}px">📁 ${esc(f.name)}</button>`); if(!bad) walk(f.id,depth+1); }); };
+    walk(null,0);
+    $('#dlg').innerHTML=`<div class="dlg-body"><h2 style="font-size:1.2rem;margin-bottom:12px">„${esc(self.name)}“ verschieben nach</h2>
+      <div class="tree"><button type="button" data-t="" aria-pressed="${target===null}">🗂 Meine Dokumente</button>${rows.join('')}</div></div>
+      <div class="dlg-foot"><button type="button" class="btn" data-act="closeDlg">Abbrechen</button><button type="button" class="btn primary" id="mvOk">Hierher verschieben</button></div>`;
+    $('#dlg').querySelectorAll('[data-t]').forEach(b=>b.onclick=e=>{e.stopPropagation();target=b.dataset.t||null;draw();});
+    $('#mvOk').onclick=e=>{e.stopPropagation(); moveEntry(kind,id,target); $('#dlg').close(); render(); };
+  };
+  draw(); if(!$('#dlg').open) $('#dlg').showModal();
+}
+function moveEntry(kind,id,target){
+  target=target||null;
+  if(kind==='folder'){ if(target===id||(target&&isInside(target,id))){ toast('Ein Ordner kann nicht in sich selbst verschoben werden'); return false; } const f=folderById(id); if(!f||(f.parentId||null)===target) return false; f.parentId=target; mark('meta'); }
+  else { const d=S.docs.find(x=>x.id===id); if(!d||(d.folderId||null)===target) return false; d.folderId=target; mark('docs'); }
+  toast('Verschoben nach „'+(target?folderById(target).name:'Meine Dokumente')+'“'); return true;
+}
+async function deleteFolder(id){
+  const f=folderById(id); if(!f) return;
+  const all=[id,...S.meta.folders.filter(x=>isInside(x.id,id)).map(x=>x.id)];
+  const docs=S.docs.filter(d=>all.includes(d.folderId));
+  const n=docs.length+all.length-1;
+  if(!await askConfirm(n?`Ordner „${f.name}“ mit allem Inhalt (${docs.length} Dateien, ${all.length-1} Unterordner) endgültig löschen?`:`Ordner „${f.name}“ löschen?`)) return;
+  for(const d of docs){ try{ await deleteRemoteFile(d); }catch(e){ console.warn(e); } }
+  S.docs=S.docs.filter(d=>!docs.includes(d)); S.meta.folders=S.meta.folders.filter(x=>!all.includes(x.id));
+  if(all.includes(ui.folder)) ui.folder=f.parentId||null;
+  mark('meta','docs'); render();
+}
+function wireDocs(){
+  const fx=$('#fx'); if(!fx) return;
+  document.querySelectorAll('[data-drag]').forEach(el=>el.addEventListener('dragstart',e=>{ e.dataTransfer.setData('text/x-meinheft',el.dataset.drag); e.dataTransfer.effectAllowed='move'; }));
+  document.querySelectorAll('[data-drop]').forEach(el=>{
+    el.addEventListener('dragover',e=>{ e.preventDefault(); e.stopPropagation(); el.classList.add('over'); });
+    el.addEventListener('dragleave',()=>el.classList.remove('over'));
+    el.addEventListener('drop',e=>{ e.preventDefault(); e.stopPropagation(); el.classList.remove('over'); fx.classList.remove('dragging');
+      const target=el.dataset.drop||null; const m=e.dataTransfer.getData('text/x-meinheft');
+      if(m){ const [k,id]=m.split(':'); if(moveEntry(k,id,target)) render(); }
+      else if(e.dataTransfer.files?.length) uploadFiles([...e.dataTransfer.files],target);
+    });
+  });
+  fx.addEventListener('dragover',e=>{ if(e.dataTransfer.types.includes('Files')){ e.preventDefault(); fx.classList.add('dragging'); } });
+  fx.addEventListener('dragleave',e=>{ if(e.target===fx) fx.classList.remove('dragging'); });
+  fx.addEventListener('drop',e=>{ e.preventDefault(); fx.classList.remove('dragging'); if(e.dataTransfer.files?.length) uploadFiles([...e.dataTransfer.files],ui.folder); });
+}
+
+/* ---------- Item dialog ---------- */
+let draft=null;
+function openItem(id,preset={}){
+  const ex=id?S.items.find(i=>i.id===id):null;
+  const defGroup=preset.group||S.meta.groups.find(g=>!S.meta.settings.hidden.includes(g.id))?.id||S.meta.groups[0].id;
+  draft=ex?JSON.parse(JSON.stringify(ex)):{id:null,kind:'fach',type:preset.type||'event',title:'',date:preset.day||'',endDate:'',group:defGroup,desc:'',subtasks:[],done:false,test:false,subject:''};
+  const g=ex&&ex.test?gradeOfTest(ex):null;
+  draft._sem=g?g.semesterId:S.meta.activeSem; draft._weight=g?g.weight:1; draft._grade=g&&g.grade!=null?String(g.grade):'';
+  renderDlg(); $('#dlg').showModal(); if(!ex) setTimeout(()=>$('#f_title')?.focus(),30);
+}
+function renderDlg(){
+  const d=draft, ex=d.id?S.items.find(i=>i.id===d.id):null, g=ex&&ex.test?gradeOfTest(ex):null;
+  $('#dlg').innerHTML=`<form method="dialog" id="itemForm"><div class="dlg-body"><div class="form">
+    <input class="full title-in" id="f_title" value="${esc(d.title)}" placeholder="Titel hinzufügen" aria-label="Titel">
+    <div class="full seg" role="group" aria-label="Art">${[['event','Termin'],['task','Aufgabe']].map(([t,l])=>`<button type="button" aria-pressed="${d.type===t}" data-act="dType" data-type="${t}">${l}</button>`).join('')}</div>
+    <label>${d.type==='event'?'Datum':'Fällig am'}<input type="date" id="f_date" value="${esc(d.date)}"></label>
+    ${d.type==='event'?`<label>Bis (optional)<input type="date" id="f_end" value="${esc(d.endDate||'')}"></label>`:'<span></span>'}
+    <label class="full">Gruppe<select id="f_group">${S.meta.groups.map(x=>`<option value="${x.id}" ${x.id===d.group?'selected':''}>● ${esc(x.name)}</option>`).join('')}</select></label>
+    ${d.type==='event'?`<label class="full switch"><input type="checkbox" id="f_test" data-act="dTest" ${d.test?'checked':''}> Das ist eine Prüfung – Note im Notentool erfassen</label>`:''}
+    ${d.type==='event'&&d.test?`<div class="testbox"><div class="form">
+      <div class="full seg" role="group" aria-label="Art der Note">${Object.entries(KINDS).map(([k,l])=>`<button type="button" aria-pressed="${(d.kind||'fach')===k}" data-act="dKind" data-k="${k}">${l}</button>`).join('')}</div>
+      <label>${KINDS[d.kind||'fach']}<input id="f_subject" list="subjList" value="${esc(d.subject||'')}" placeholder="${KIND_PH[d.kind||'fach']}"></label>
+      <label>Semester<select id="f_sem">${S.meta.semesters.map(s=>`<option value="${s.id}" ${s.id===d._sem?'selected':''}>${esc(s.name)}</option>`).join('')}</select></label>
+      <label>Gewichtung<input type="number" id="f_weight" min="0.25" step="0.25" value="${d._weight}"></label>
+      <label>Note ${g&&g.enteredAt?`<span style="font-weight:400">· eingetragen ${fmtTs(g.enteredAt)}</span>`:'<span style="font-weight:400">(später)</span>'}<input id="f_grade" inputmode="decimal" placeholder="z.B. 4.5" value="${esc(d._grade)}"></label>
+    </div></div>`:''}
+    <label class="full">Beschreibung<textarea id="f_desc" placeholder="Notizen, Details…">${esc(d.desc)}</textarea></label>
+    ${d.type==='task'?`<div class="full"><div class="section-title" style="font-size:.92rem;margin:0 0 2px">Unteraufgaben <span class="muted">${d.subtasks.filter(s=>s.done).length}/${d.subtasks.length}</span></div>
+      <div class="sublist">${d.subtasks.map(s=>`<div class="sub ${s.done?'done':''}"><input type="checkbox" class="tcheck sm" data-act="subToggle" data-sid="${s.id}" ${s.done?'checked':''} aria-label="Erledigt"><input type="text" value="${esc(s.title)}" data-subedit="${s.id}" aria-label="Unteraufgabe"><button type="button" class="icon-btn" data-act="subDel" data-sid="${s.id}" aria-label="Entfernen">✕</button></div>`).join('')}</div>
+      <div class="quick">＋<input id="f_newsub" placeholder="Unteraufgabe hinzufügen"></div></div>`:''}
+  </div><datalist id="subjList">${S.meta.catalog[d.kind||'fach'].map(s=>`<option value="${esc(s)}">`).join('')}</datalist></div>
+  <div class="dlg-foot">${ex?'<button type="button" class="btn danger" data-act="delItem" style="margin-right:auto">Löschen</button>':''}
+    <button type="button" class="btn" data-act="closeDlg">Abbrechen</button><button type="submit" class="btn primary">Speichern</button></div></form>`;
+}
+function readDraft(){
+  const v=id=>{const e=$('#'+id);return e?e.value:undefined;};
+  draft.title=v('f_title')??draft.title; draft.date=v('f_date')??draft.date; if($('#f_end')) draft.endDate=v('f_end');
+  draft.group=v('f_group')??draft.group; draft.desc=v('f_desc')??draft.desc;
+  if($('#f_test')) draft.test=$('#f_test').checked;
+  if($('#f_subject')) draft.subject=v('f_subject').trim(); if($('#f_sem')) draft._sem=v('f_sem'); if($('#f_weight')) draft._weight=parseFloat(v('f_weight'))||1; if($('#f_grade')) draft._grade=v('f_grade');
+  document.querySelectorAll('[data-subedit]').forEach(e=>{const s=draft.subtasks.find(x=>x.id===e.dataset.subedit); if(s) s.title=e.value;});
+}
+function addSub(){ readDraft(); const t=$('#f_newsub').value.trim(); if(!t) return; draft.subtasks.push({id:uid(),title:t,done:false}); renderDlg(); $('#f_newsub').focus(); }
+function saveItem(){
+  readDraft(); if(!draft.title.trim()){ toast('Bitte einen Titel eingeben'); $('#f_title').focus(); return; }
+  if(draft.type==='event'&&!draft.date){ toast('Ein Termin braucht ein Datum'); return; }
+  if(draft.endDate&&draft.endDate<draft.date) draft.endDate='';
+  const isTest=draft.type==='event'&&draft.test;
+  let it=draft.id?S.items.find(i=>i.id===draft.id):null;
+  const clean={...draft}; ['_sem','_weight','_grade'].forEach(k=>delete clean[k]);
+  clean.subtasks=clean.type==='task'?clean.subtasks.filter(s=>s.title.trim()):[];
+  if(clean.type==='task'){ clean.test=false; clean.endDate=''; }
+  if(!it){ it={...clean,id:uid(),createdAt:new Date().toISOString()}; S.items.push(it); } else Object.assign(it,clean);
+  it.test=isTest;
+  if(isTest){
+    it.kind=draft.kind||'fach'; addToCatalog(it.kind,it.subject);
+    const g=syncTestGrade(it,draft._sem,draft._weight); const val=(draft._grade||'').trim();
+    if(val!==(g.grade==null?'':String(g.grade))){ if(!setGrade(g,val)) return; if(g.grade!=null) toast(`Note ${gfmt(g.grade)} eingetragen`); }
+    mark('grades');
+  } else { const g=gradeOfTest(it); if(g){ if(g.grade==null) S.grades=S.grades.filter(x=>x!==g); else g.testId=null; mark('grades'); } }
+  mark('items'); $('#dlg').close(); render();
+}
+async function deleteItem(){
+  const it=S.items.find(i=>i.id===draft.id); if(!it) return; const g=it.test?gradeOfTest(it):null;
+  if(!await askConfirm(`„${it.title}“ löschen?${g&&g.grade!=null?' Die Note bleibt im Notentool erhalten.':''}`)) return;
+  if(g){ if(g.grade==null) S.grades=S.grades.filter(x=>x!==g); else g.testId=null; mark('grades'); }
+  S.items=S.items.filter(i=>i!==it); mark('items'); $('#dlg').close(); render();
+}
+
+/* ---------- Grade dialog ---------- */
+let gd=null;
+function openGrade(id){
+  const g=id?S.grades.find(x=>x.id===id):{id:null,kind:'fach',subject:'',title:'',date:todayISO(),grade:null,weight:1,semesterId:ui.gradeView&&ui.gradeView!=='all'?ui.gradeView:S.meta.activeSem};
+  gd={...g,kind:g.kind||'fach',_grade:g.grade??''}; renderGradeDlg(); $('#dlg').showModal();
+}
+function readGrade(){ const v=id=>$('#'+id)?.value; if(!gd.testId){ gd.title=v('g_title')??gd.title; gd.subject=(v('g_subject')??gd.subject).trim(); gd.date=v('g_date')??gd.date; } gd.semesterId=v('g_sem')??gd.semesterId; gd.weight=parseFloat(v('g_weight'))||1; gd._grade=v('g_grade')??gd._grade; }
+function renderGradeDlg(){
+  const g=gd, linked=g.testId?S.items.find(i=>i.id===g.testId):null, k=g.kind||'fach';
+  $('#dlg').innerHTML=`<form method="dialog" id="gradeForm"><div class="dlg-body">
+    <h2 style="font-size:1.3rem;margin-bottom:14px">${g.id?'Note bearbeiten':'Note hinzufügen'}</h2>
+    ${linked?`<p class="muted" style="margin-top:-6px">Verknüpft mit dem Kalendertermin „${esc(linked.title)}“. Titel, Datum und ${KINDS[k]} änderst du dort.</p>`:''}
+    <div class="form">
+      ${linked?'':`<div class="full seg" role="group" aria-label="Art der Note">${Object.entries(KINDS).map(([kk,l])=>`<button type="button" aria-pressed="${k===kk}" data-act="gKind" data-k="${kk}">${l}</button>`).join('')}</div>`}
+      <label class="full">${KINDS[k]}<input id="g_subject" list="subjList2" value="${esc(g.subject)}" placeholder="${KIND_PH[k]}" ${linked?'disabled':''}></label>
+      <label class="full">Prüfung / Bezeichnung<input id="g_title" value="${esc(g.title)}" placeholder="${k==='fach'?'z.B. Prüfung Kapitel 3':k==='modul'?'z.B. Modulprüfung':'z.B. ÜK-Kompetenznachweis'}" ${linked?'disabled':''}></label>
+      <label>Geschrieben am<input type="date" id="g_date" value="${esc(g.date)}" ${linked?'disabled':''}></label>
+      <label>Semester<select id="g_sem">${S.meta.semesters.map(s=>`<option value="${s.id}" ${s.id===g.semesterId?'selected':''}>${esc(s.name)}</option>`).join('')}</select></label>
+      <label>Gewichtung<input type="number" id="g_weight" min="0.25" step="0.25" value="${g.weight||1}"></label>
+      <label>Note${g.enteredAt?` <span style="font-weight:400">· eingetragen ${fmtTs(g.enteredAt)}</span>`:''}<input id="g_grade" inputmode="decimal" value="${esc(g._grade)}" placeholder="1 bis 6"></label>
+    </div><datalist id="subjList2">${S.meta.catalog[k].map(s=>`<option value="${esc(s)}">`).join('')}</datalist></div>
+    <div class="dlg-foot">${g.id?'<button type="button" class="btn danger" data-act="delGrade" style="margin-right:auto">Löschen</button>':''}<button type="button" class="btn" data-act="closeDlg">Abbrechen</button><button class="btn primary">Speichern</button></div></form>`;
+}
+function saveGradeDlg(){
+  readGrade(); let g=gd.id?S.grades.find(x=>x.id===gd.id):null; const isNew=!g;
+  if(!gd.testId){ if(!gd.subject){ toast(`Bitte ${KINDS[gd.kind]} angeben`); return; } if(!gd.title) gd.title=gd.kind==='fach'?'Prüfung':gd.kind==='modul'?'Modulnote':'ÜK-Note'; }
+  if(isNew) g={id:uid(),testId:null,grade:null,enteredAt:null};
+  if(!g.testId) Object.assign(g,{kind:gd.kind,subject:gd.subject,title:gd.title,date:gd.date});
+  g.semesterId=gd.semesterId; g.weight=gd.weight;
+  const val=String(gd._grade).trim(); if(val!==(g.grade==null?'':String(g.grade))){ if(!setGrade(g,val)) return; }
+  if(isNew) S.grades.push(g);
+  addToCatalog(g.kind,g.subject); mark('grades'); $('#dlg').close(); render();
+}
+
+/* ---------- Group dialog ---------- */
+let gdraft=null;
+function openGroup(id){
+  const g=id?S.meta.groups.find(x=>x.id===id):null;
+  gdraft={id:g?.id||null,name:g?.name||'',color:g?.color||PALETTE[S.meta.groups.length%PALETTE.length]};
+  renderGroupDlg(); $('#dlg').showModal(); setTimeout(()=>$('#gr_name')?.focus(),30);
+}
+function renderGroupDlg(){
+  const n=gdraft.id?S.items.filter(i=>i.group===gdraft.id).length:0;
+  $('#dlg').innerHTML=`<form method="dialog" id="groupForm"><div class="dlg-body">
+    <h2 style="font-size:1.3rem;margin-bottom:14px">${gdraft.id?'Gruppe bearbeiten':'Neue Gruppe'}</h2>
+    <div class="form"><label class="full">Name<input id="gr_name" value="${esc(gdraft.name)}" placeholder="z.B. Arbeit, Sport, Projekt X"></label>
+    <div class="full"><div class="muted" style="font-size:.84rem;font-weight:700;margin-bottom:6px">Farbe</div>
+      <div class="swatches">${PALETTE.map(c=>`<button type="button" class="sw" style="background:${c}" aria-pressed="${c.toLowerCase()===gdraft.color.toLowerCase()}" data-act="grColor" data-c="${c}" aria-label="Farbe ${c}"></button>`).join('')}
+      <input type="color" class="sw-custom" id="gr_custom" value="${gdraft.color}" title="Eigene Farbe" aria-label="Eigene Farbe"></div></div></div>
+    ${gdraft.id?`<p class="muted" style="font-size:.85rem;margin-top:14px">${n} Einträge in dieser Gruppe.</p>`:''}
+  </div><div class="dlg-foot">${gdraft.id&&S.meta.groups.length>1?'<button type="button" class="btn danger" data-act="grpDel" style="margin-right:auto">Gruppe löschen</button>':''}
+    <button type="button" class="btn" data-act="closeDlg">Abbrechen</button><button class="btn primary">Speichern</button></div></form>`;
+}
+function saveGroup(){
+  gdraft.name=$('#gr_name').value.trim(); if(!gdraft.name){ toast('Bitte einen Namen eingeben'); return; }
+  if(gdraft.id) Object.assign(S.meta.groups.find(g=>g.id===gdraft.id),{name:gdraft.name,color:gdraft.color});
+  else S.meta.groups.push({id:uid(),name:gdraft.name,color:gdraft.color});
+  mark('meta'); $('#dlg').close(); render();
+}
+async function deleteGroup(){
+  const g=S.meta.groups.find(x=>x.id===gdraft.id); const others=S.meta.groups.filter(x=>x!==g); const n=S.items.filter(i=>i.group===g.id).length;
+  if(!await askConfirm(n?`„${g.name}“ löschen? Die ${n} Einträge werden in „${others[0].name}“ verschoben.`:`„${g.name}“ löschen?`)) return;
+  S.items.forEach(i=>{ if(i.group===g.id) i.group=others[0].id; });
+  S.meta.groups=others; S.meta.settings.hidden=S.meta.settings.hidden.filter(h=>h!==g.id);
+  mark('meta','items'); $('#dlg').close(); render();
+}
+
+/* ---------- Settings dialog ---------- */
+function openSettings(){
+  const s=S.meta.settings; const seg=(key,opts)=>`<div class="seg" style="min-width:230px">${opts.map(([v,l])=>`<button type="button" aria-pressed="${String(s[key])===String(v)}" data-act="setOpt" data-k="${key}" data-v="${v}">${l}</button>`).join('')}</div>`;
+  $('#dlg').innerHTML=`<div class="dlg-body"><h2 style="font-size:1.3rem;margin-bottom:6px">Darstellung</h2>
+    <div class="set-row"><div><b>Modus</b><span class="muted" style="font-size:.85rem">Hell, dunkel oder wie dein System</span></div>${seg('theme',[['light','Hell'],['dark','Dunkel'],['system','System']])}</div>
+    <div class="set-row"><div><b>Hauptfarbe</b><span class="muted" style="font-size:.85rem">Buttons, Markierungen, heute</span></div>
+      <div class="swatches">${PALETTE.slice(0,8).map(c=>`<button type="button" class="sw" style="background:${c}" aria-pressed="${c.toLowerCase()===s.accent.toLowerCase()}" data-act="setAccent" data-c="${c}" aria-label="Farbe ${c}"></button>`).join('')}<input type="color" class="sw-custom" id="set_accent" value="${s.accent}" aria-label="Eigene Farbe"></div></div>
+    <div class="set-row"><div><b>Hintergrund</b></div>${seg('bg',[['grid','Karo'],['lines','Linien'],['plain','Schlicht']])}</div>
+    <div class="set-row"><div><b>Schriftgrösse</b></div>${seg('size',[['small','Klein'],['normal','Normal'],['large','Gross']])}</div>
+    <div class="set-row"><div><b>Woche beginnt am</b></div>${seg('weekStart',[[1,'Montag'],[0,'Sonntag']])}</div>
+    <div class="set-row"><div><b>Aufgaben-Leiste im Kalender</b></div>${seg('showTaskPanel',[[true,'Anzeigen'],[false,'Ausblenden']])}</div>
+    <div class="set-row"><div><b>Erledigte Aufgaben im Kalender</b></div>${seg('showDoneInCal',[[true,'Anzeigen'],[false,'Ausblenden']])}</div>
+    <div class="set-row"><div><b>Gruppen, Fächer & Semester</b></div><div style="display:flex;gap:6px"><button class="btn small" data-act="grpNew">＋ Gruppe</button><button class="btn small" data-act="manage">Noten-Kategorien</button></div></div>
+    <div class="set-row"><div><b>Speicher</b><span class="muted" style="font-size:.85rem;display:block">GitHub: ${esc(cfg?.owner||'')}/${esc(cfg?.repo||'')}</span></div><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn small" data-act="syncNow">⟳ Jetzt synchronisieren</button><button class="btn small danger" data-act="logout">Abmelden</button></div></div>
+    <div class="set-row"><div><b>Daten importieren</b><span class="muted" style="font-size:.85rem;display:block">Exportdatei aus der Claude-Version (mein-heft-export.json)</span></div><label class="btn small" style="cursor:pointer">Datei wählen<input type="file" id="importFile" accept="application/json,.json" hidden></label></div>
+  </div><div class="dlg-foot"><button class="btn primary" data-act="closeDlg">Fertig</button></div>`;
+  if(!$('#dlg').open) $('#dlg').showModal();
+}
+
+/* ---------- Manage subjects & semesters ---------- */
+function openManage(){
+  $('#dlg').innerHTML=`<div class="dlg-body"><h2 style="font-size:1.3rem;margin-bottom:14px">Fächer, Module, ÜKs & Semester</h2>
+    <div class="section-title">Semester</div>
+    ${S.meta.semesters.map(s=>`<div class="row"><input value="${esc(s.name)}" data-semname="${s.id}" style="flex:1;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--paper)" aria-label="Semestername">
+      ${s.id===S.meta.activeSem?'<span class="open-pill" style="background:var(--accent-soft);color:var(--ink)">aktuell</span>':`<button class="btn small" data-act="semActive" data-id="${s.id}">Als aktuell</button>`}
+      <button class="icon-btn" data-act="semDel" data-id="${s.id}" aria-label="Löschen">✕</button></div>`).join('')}
+    <div style="display:flex;gap:6px;margin:8px 0 22px"><input id="newSem" placeholder="z.B. FS 2027" style="flex:1;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--paper)"><button class="btn small" data-act="semAdd">Hinzufügen</button></div>
+    ${Object.keys(KINDS).map(k=>`<div class="section-title" style="margin-top:18px">${KINDS_PL[k]}</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">${S.meta.catalog[k].map(s=>`<span class="open-pill" style="background:var(--accent-soft);color:var(--ink);font-size:.85rem;padding:4px 6px 4px 10px">${esc(s)} <button class="icon-btn" style="padding:0 3px" data-act="subjDel" data-k="${k}" data-name="${esc(s)}" aria-label="${esc(s)} entfernen">✕</button></span>`).join('')||'<span class="muted" style="font-size:.9rem">Noch keine.</span>'}</div>
+    <div style="display:flex;gap:6px;margin-top:8px"><input id="new_${k}" placeholder="${KIND_PH[k]}" style="flex:1;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--paper)"><button class="btn small" data-act="subjAdd" data-k="${k}">Hinzufügen</button></div>`).join('')}
+    <p class="muted" style="font-size:.85rem;margin-top:18px">HS = Herbstsemester, FS = Frühlingssemester. Das aktuelle Semester wird für neue Prüfungen vorgeschlagen. Module und ÜKs ergeben je einen gemeinsamen Schnitt, Fächer werden einzeln gerechnet.</p>
+  </div><div class="dlg-foot"><button class="btn primary" data-act="closeDlg">Fertig</button></div>`;
+  if(!$('#dlg').open) $('#dlg').showModal();
+}
+
+/* ---------- Documents ---------- */
+const MAX_UPLOAD=25*1024*1024;
+const safeName=n=>n.normalize('NFKD').replace(/[^\w.\-]+/g,'_').slice(0,60);
+async function uploadFiles(files,folderId){
+  if(!files.length) return; if(!navigator.onLine){ toast('Zum Hochladen brauchst du Internet'); return; }
+  setSave('Lädt hoch…'); let ok=0;
+  for(const f of files){
+    if(f.size>MAX_UPLOAD){ toast(`${f.name} ist zu gross (max. 25 MB)`); continue; }
+    const id=uid(); const extn=(f.name.match(/\.[^.]+$/)||[''])[0].toLowerCase();
+    const path=`dateien/${id.slice(0,8)}-${safeName(f.name.replace(/\.[^.]+$/,''))}${extn}`;
+    try{
+      const content=bytesToB64(new Uint8Array(await f.arrayBuffer()));
+      const r=await gh(cpath(path),{method:'PUT',body:JSON.stringify({message:'Mein Heft: Datei hochgeladen',content})});
+      if(!r.ok) throw await ghFail(r);
+      const j=await r.json();
+      S.docs.push({id,name:f.name.replace(/\.[^.]+$/,''),folderId:folderId||null,contentType:f.type||'application/octet-stream',size:f.size,path,sha:j.content.sha,uploadedAt:new Date().toISOString()}); ok++;
+    }catch(e){ console.error(e); toast(`${f.name}: ${errText(e)}`); }
+  }
+  if(ok){ mark(); toast(ok>1?`${ok} Dateien hochgeladen`:'Datei hochgeladen'); } else setSave('Gespeichert');
+  render();
+}
+async function deleteRemoteFile(d){
+  if(!d.path) return;
+  let sha=d.sha;
+  for(let i=0;i<2;i++){
+    const r=await gh(cpath(d.path),{method:'DELETE',body:JSON.stringify({message:'Mein Heft: Datei gelöscht',sha})});
+    if(r.ok||r.status===404) return;
+    if(r.status===409||r.status===422){ const m=await gh(cpath(d.path)); if(m.status===404) return; sha=(await m.json()).sha; continue; }
+    throw await ghFail(r);
+  }
+}
+async function getDocBlob(d){
+  const r=await gh(cpath(d.path),{headers:{Accept:'application/vnd.github.raw'}});
+  if(!r.ok) throw new Error(errText(await ghFail(r)));
+  const b=await r.blob(); return d.contentType?new Blob([b],{type:d.contentType}):b;
+}
+let pdfjsP=null;
+function loadScript(src){ return new Promise((res,rej)=>{ const sc=document.createElement('script'); sc.src=src; sc.onload=res; sc.onerror=()=>rej(new Error('Script nicht geladen')); document.head.appendChild(sc); }); }
+function loadPdfJs(){
+  if(!pdfjsP) pdfjsP=(async()=>{ const base='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/'; await loadScript(base+'pdf.min.js'); await loadScript(base+'pdf.worker.min.js'); return window.pdfjsLib; })();
+  return pdfjsP;
+}
+const extFor=d=>{ const t=d.contentType||''; if(t.includes('pdf')) return 'pdf'; if(t.includes('png')) return 'png'; if(t.includes('jpeg')||t.includes('jpg')) return 'jpg'; if(t.includes('webp')) return 'webp'; if(t.includes('gif')) return 'gif'; if(t.includes('json')) return 'json'; if(t.includes('csv')) return 'csv'; if(t.includes('markdown')) return 'md'; return 'txt'; };
+let viewerBlob=null, viewerDoc=null;
+async function openDoc(id){
+  const d=S.docs.find(x=>x.id===id); if(!d) return; viewerDoc=d; viewerBlob=null;
+  const v=$('#viewer');
+  v.innerHTML=`<div class="vw"><div class="vw-head"><span class="doc-ico" style="width:30px;height:36px">${ext(d)}</span><h2>${esc(d.name)}</h2>
+    <button class="btn small" data-act="dlDoc">⤓ Herunterladen</button><button class="icon-btn" data-act="closeViewer" aria-label="Schliessen" style="font-size:1.2rem">✕</button></div>
+    <div class="vw-body" id="vwBody"><div class="muted" style="padding:40px">Wird geöffnet…</div></div></div>`;
+  v.showModal();
+  const body=$('#vwBody');
+  try{
+    const blob=await getDocBlob(d); viewerBlob=blob; if(viewerDoc!==d) return;
+    const type=d.contentType||blob.type||'';
+    if(type.startsWith('image/')){ body.innerHTML=''; const img=new Image(); img.alt=d.name; img.src=URL.createObjectURL(blob); body.appendChild(img); }
+    else if(type.includes('pdf')){
+      const lib=await loadPdfJs(); const pdf=await lib.getDocument({data:new Uint8Array(await blob.arrayBuffer())}).promise;
+      body.innerHTML=''; const w=Math.min(body.clientWidth-32,900);
+      for(let i=1;i<=pdf.numPages;i++){
+        if(viewerDoc!==d||!v.open) return;
+        const page=await pdf.getPage(i); const vp0=page.getViewport({scale:1}); const scale=w/vp0.width*(window.devicePixelRatio||1);
+        const vp=page.getViewport({scale}); const c=document.createElement('canvas'); c.width=vp.width; c.height=vp.height; c.style.width=w+'px';
+        body.appendChild(c); await page.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;
+      }
+    } else { body.innerHTML=`<pre>${esc(await blob.text())}</pre>`; }
+  }catch(e){ console.error(e); body.innerHTML=`<div style="padding:40px;text-align:center"><b>Vorschau nicht möglich.</b><p class="muted">${esc(e.message||'')}</p><p>Du kannst die Datei aber herunterladen.</p></div>`; }
+}
+async function downloadDoc(){
+  const d=viewerDoc; if(!d) return;
+  try{ const blob=viewerBlob||await getDocBlob(d); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`${d.name}.${extFor(d)}`; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),5000); }
+  catch(e){ console.error(e); toast('Herunterladen nicht möglich'); }
+}
+async function delDoc(id){
+  const d=S.docs.find(x=>x.id===id); if(!d||!await askConfirm(`„${d.name}“ endgültig löschen?`)) return;
+  try{ await deleteRemoteFile(d); }catch(e){ console.error(e); toast(errText(e)); return; }
+  S.docs=S.docs.filter(x=>x!==d); mark(); render();
+}
+
+/* ---------- Events ---------- */
+function toggleTask(id,checked){ const it=S.items.find(i=>i.id===id); if(!it) return; it.done=checked; if(checked) toast(`„${it.title}“ erledigt`); mark('items'); render(); }
+document.addEventListener('click',e=>{
+  const tabBtn=e.target.closest('#tabs button'); if(tabBtn){ ui.tab=tabBtn.dataset.tab; render(); scrollTo(0,0); return; }
+  const a=e.target.closest('[data-act]'); if(!a) return; const act=a.dataset.act, id=a.dataset.id;
+  if(act!=='dayNew') e.stopPropagation();
+  switch(act){
+    case 'tab': ui.tab=a.dataset.tab; render(); break;
+    case 'new': openItem(null,{day:a.dataset.day,type:a.dataset.type}); break;
+    case 'dayNew': if(e.target===a){ ui.selDay=a.dataset.day; openItem(null,{day:a.dataset.day}); } break;
+    case 'open': openItem(id); break;
+    case 'toggle': toggleTask(id,a.checked); break;
+    case 'subQuick': { const it=S.items.find(i=>i.id===id); const s=it.subtasks.find(x=>x.id===a.dataset.sid); s.done=a.checked; mark('items'); render(); break; }
+    case 'selDay': ui.selDay=a.dataset.day; { const d=parseISO(ui.selDay); if(d.getMonth()!==ui.calMonth.getMonth()) ui.calMonth=new Date(d.getFullYear(),d.getMonth(),1); } render(); break;
+    case 'calPrev': ui.calMonth=new Date(ui.calMonth.getFullYear(),ui.calMonth.getMonth()-1,1); render(); break;
+    case 'calNext': ui.calMonth=new Date(ui.calMonth.getFullYear(),ui.calMonth.getMonth()+1,1); render(); break;
+    case 'calToday': ui.calMonth=new Date(new Date().getFullYear(),new Date().getMonth(),1); ui.selDay=todayISO(); render(); break;
+    case 'dType': readDraft(); draft.type=a.dataset.type; renderDlg(); break;
+    case 'dTest': readDraft(); renderDlg(); break;
+    case 'subToggle': { readDraft(); const s=draft.subtasks.find(x=>x.id===a.dataset.sid); s.done=a.checked; renderDlg(); break; }
+    case 'subDel': readDraft(); draft.subtasks=draft.subtasks.filter(x=>x.id!==a.dataset.sid); renderDlg(); break;
+    case 'delItem': deleteItem(); break;
+    case 'closeDlg': $('#dlg').close(); render(); break;
+    case 'clearDone': askConfirm('Alle erledigten Aufgaben dieser Gruppe löschen?').then(ok=>{ if(ok){ S.items=S.items.filter(i=>!(i.type==='task'&&i.done&&i.group===id)); mark('items'); render(); } }); break;
+    case 'grpNew': openGroup(null); break;
+    case 'grpEdit': openGroup(id); break;
+    case 'grColor': gdraft.name=$('#gr_name').value; gdraft.color=a.dataset.c; renderGroupDlg(); break;
+    case 'grpDel': deleteGroup(); break;
+    case 'settings': if(loaded) openSettings(); break;
+    case 'syncNow': if(pendingSave) pushNow(); else syncNow(); break;
+    case 'logout': askConfirm('Auf diesem Gerät abmelden? Deine Daten bleiben im GitHub-Repo.','Abmelden').then(ok=>{ if(ok) logout(); }); break;
+
+    case 'setOpt': { let v=a.dataset.v; if(v==='true') v=true; else if(v==='false') v=false; else if(/^\d$/.test(v)) v=+v; S.meta.settings[a.dataset.k]=v; applySettings(); mark('meta'); openSettings(); render(); break; }
+    case 'setAccent': S.meta.settings.accent=a.dataset.c; applySettings(); mark('meta'); openSettings(); break;
+    case 'gview': ui.gradeView=id; render(); break;
+    case 'newGrade': openGrade(null); break;
+    case 'editGrade': openGrade(id); break;
+    case 'delGrade': { const g=S.grades.find(x=>x.id===gd.id); if(!g) break; askConfirm('Diese Note löschen?').then(ok=>{ if(!ok) return; if(g.testId){ g.grade=null; g.enteredAt=null; toast('Note entfernt – sie ist wieder offen'); } else S.grades=S.grades.filter(x=>x!==g); mark('grades'); $('#dlg').close(); render(); }); break; }
+    case 'saveGradeInline': { const inp=document.querySelector(`[data-gradein="${a.dataset.gid}"]`); const g=S.grades.find(x=>x.id===a.dataset.gid);
+      if(!inp.value.trim()){ toast('Bitte eine Note eingeben'); inp.focus(); break; } if(setGrade(g,inp.value)){ toast(`Note ${gfmt(g.grade)} in ${g.subject||KINDS[g.kind||'fach']} eingetragen`); render(); } break; }
+    case 'manage': openManage(); break;
+    case 'semAdd': { const n=$('#newSem').value.trim(); if(!n) break; S.meta.semesters.push({id:uid(),name:n}); mark('meta'); openManage(); break; }
+    case 'semActive': S.meta.activeSem=id; mark('meta'); openManage(); break;
+    case 'semDel': { if(S.meta.semesters.length<=1){ toast('Mindestens ein Semester wird gebraucht'); break; } if(S.grades.some(g=>g.semesterId===id)){ toast('Dieses Semester hat noch Noten'); break; }
+      S.meta.semesters=S.meta.semesters.filter(s=>s.id!==id); if(S.meta.activeSem===id) S.meta.activeSem=S.meta.semesters.at(-1).id; if(ui.gradeView===id) ui.gradeView=S.meta.activeSem; mark('meta'); openManage(); break; }
+    case 'subjAdd': { const k=a.dataset.k; const n=$('#new_'+k).value.trim(); addToCatalog(k,n); openManage(); break; }
+    case 'subjDel': { const k=a.dataset.k; S.meta.catalog[k]=S.meta.catalog[k].filter(s=>s!==a.dataset.name); mark('meta'); openManage(); break; }
+    case 'dKind': readDraft(); draft.kind=a.dataset.k; renderDlg(); break;
+    case 'gKind': readGrade(); gd.kind=a.dataset.k; renderGradeDlg(); break;
+    case 'dlDoc': downloadDoc(); break;
+    case 'closeViewer': $('#viewer').close(); viewerDoc=null; break;
+    case 'pickFiles': $('#hiddenFile').click(); break;
+    case 'cd': ui.folder=id||null; ui.docQ=''; render(); break;
+    case 'folderNew': askText('Neuer Ordner','','Erstellen').then(n=>{ if(!n) return; S.meta.folders.push({id:uid(),name:n,parentId:ui.folder}); mark('meta'); render(); }); break;
+    case 'folderRename': { const f=folderById(id); askText('Ordner umbenennen',f.name).then(n=>{ if(!n) return; f.name=n; mark('meta'); render(); }); break; }
+    case 'docRename': { const d=S.docs.find(x=>x.id===id); askText('Datei umbenennen',d.name).then(n=>{ if(!n) return; d.name=n; mark('docs'); render(); }); break; }
+    case 'folderMove': openMoveDlg('folder',id); break;
+    case 'docMove': openMoveDlg('doc',id); break;
+    case 'folderDel': deleteFolder(id); break;
+    case 'openDoc': openDoc(id); break;
+    case 'delDoc': delDoc(id); break;
+  }
+});
+document.addEventListener('change',e=>{
+  const t=e.target;
+  if(t.id==='importFile'&&t.files[0]){ importFile(t.files[0]); t.value=''; return; }
+  if(t.id==='hiddenFile'){ uploadFiles([...t.files],ui.folder); t.value=''; return; }
+  if(t.dataset.grpvis){ const h=S.meta.settings.hidden; const i=h.indexOf(t.dataset.grpvis); if(t.checked&&i>-1) h.splice(i,1); if(!t.checked&&i<0) h.push(t.dataset.grpvis); mark('meta'); render(); }
+  if(t.dataset.semname){ const s=S.meta.semesters.find(x=>x.id===t.dataset.semname); if(s&&t.value.trim()){ s.name=t.value.trim(); mark('meta'); } }
+  if(t.id==='gr_custom'){ gdraft.name=$('#gr_name').value; gdraft.color=t.value; renderGroupDlg(); }
+  if(t.id==='set_accent'){ S.meta.settings.accent=t.value; applySettings(); mark('meta'); openSettings(); }
+});
+document.addEventListener('input',e=>{ if(e.target.dataset.input==='docQ'){ ui.docQ=e.target.value; const pos=e.target.selectionStart; render(); const i=document.querySelector('[data-input="docQ"]'); i.focus(); i.setSelectionRange(pos,pos); } });
+document.addEventListener('keydown',e=>{
+  const t=e.target;
+  if(e.key==='Enter'&&t.id==='f_newsub'){ e.preventDefault(); addSub(); }
+  if(e.key==='Enter'&&t.dataset.quick){ e.preventDefault(); const v=t.value.trim(); if(!v) return;
+    S.items.push({id:uid(),type:'task',title:v,date:'',endDate:'',group:t.dataset.quick,desc:'',subtasks:[],done:false,test:false,createdAt:new Date().toISOString()});
+    mark('items'); const q=t.dataset.quick; render(); document.querySelector(`[data-quick="${q}"]`)?.focus(); }
+  if(e.key==='Enter'&&t.classList.contains('grade-in')){ e.preventDefault(); t.nextElementSibling?.click(); }
+  if(e.key==='Enter'&&(t.id==='newSem'||t.id.startsWith('new_'))){ e.preventDefault(); t.nextElementSibling?.click(); }
+});
+document.addEventListener('submit',e=>{
+  if(e.target.id==='setupForm'){ e.preventDefault(); const b=e.target.querySelector('button'); b.disabled=true; b.textContent='Prüfe…';
+    connect($('#su_owner').value.trim(),$('#su_repo').value.trim(),$('#su_token').value.trim()).then(()=>init()).catch(err=>showSetup(err.message,{owner:$('#su_owner').value.trim(),repo:$('#su_repo').value.trim()})); return; }
+  if(e.target.id==='itemForm'){ e.preventDefault(); saveItem(); }
+  if(e.target.id==='gradeForm'){ e.preventDefault(); saveGradeDlg(); }
+  if(e.target.id==='groupForm'){ e.preventDefault(); saveGroup(); }
+});
+window.addEventListener('beforeunload',e=>{ if(pendingSave){ pushNow(); e.preventDefault(); e.returnValue=''; } });
+render(); init();
+if('serviceWorker' in navigator && location.protocol==='https:') navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
