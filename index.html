@@ -715,7 +715,7 @@ function vGrades(){
   if(ui.gradeView==='all') return `<div class="page-head"><h1>Noten</h1><button class="btn primary" data-act="newGrade">＋ Note</button></div>${chips}${vOverall()}`;
   const gs=S.grades.filter(g=>g.semesterId===ui.gradeView);
   const U={fach:units(gs,'fach'),modul:units(gs,'modul'),uek:units(gs,'uek')};
-  const modAvg=meanOf(U.modul.map(u=>u.avg)), uekAvg=meanOf(U.uek.map(u=>u.avg));
+  const modAvg=meanOf(U.modul.map(u=>u.avg)), uekAvg=meanOf(U.uek.map(u=>u.avg)), fachAvg=meanOf(U.fach.map(u=>u.avg));
   const openNames=[...U.fach,...U.modul,...U.uek].filter(u=>u.grades.some(isOpenGrade));
   const section=(k,extra)=>U[k].length?`<div class="section-title" style="font-size:1.25rem;margin:26px 0 10px"><span>${KINDS_PL[k]}</span>${extra||''}</div><div class="grid2">${U[k].map(unitCard).join('')}</div>`:'';
   return `<div class="page-head"><div><p class="muted" style="margin:0">Semester</p><h1>${esc(semName(ui.gradeView))}</h1></div><button class="btn primary" data-act="newGrade">＋ Note</button></div>
@@ -724,10 +724,10 @@ function vGrades(){
   ${gs.length?`<div class="grid2">
     ${statTile('Modulschnitt',modAvg,`${U.modul.filter(u=>u.avg!=null).length} Module mit Note`)}
     ${statTile('ÜK-Schnitt',uekAvg,`${U.uek.filter(u=>u.avg!=null).length} ÜKs mit Note`)}
-    <div class="panel"><div class="muted" style="font-size:.85rem">Fächer (einzeln)</div>${U.fach.length?U.fach.map(u=>`<div style="display:flex;justify-content:space-between;padding:3px 0"><span>${esc(u.name)}</span><span class="g ${gcls(u.avg)}">${gfmt(u.avg)}</span></div>`).join(''):'<div class="empty">Noch keine Fachnoten.</div>'}</div>
+    <div class="panel"><div class="muted" style="font-size:.85rem">Fächerschnitt</div><div class="g bignum ${gcls(fachAvg)}">${gfmt(fachAvg)}</div><div class="muted" style="font-size:.85rem;margin:4px 0 8px">${U.fach.filter(u=>u.avg!=null).length} Fächer mit Note · gerundet ${fachAvg!=null?(Math.round(fachAvg*10)/10).toFixed(1):'–'}</div>${U.fach.length?U.fach.map(u=>`<div style="display:flex;justify-content:space-between;padding:3px 0"><span>${esc(u.name)}</span><span class="g ${gcls(u.avg)}">${gfmt(u.avg)}</span></div>`).join(''):'<div class="empty">Noch keine Fachnoten.</div>'}</div>
   </div>
   ${section('modul',`<span class="muted" style="font-size:.95rem">Modulschnitt <span class="g ${gcls(modAvg)}">${gfmt(modAvg)}</span></span>`)}
-  ${section('fach')}
+  ${section('fach',`<span class="muted" style="font-size:.95rem">Fächerschnitt <span class="g ${gcls(fachAvg)}">${gfmt(fachAvg)}</span></span>`)}
   ${U.uek.length?`<div class="section-title" style="font-size:1.25rem;margin:26px 0 10px"><span>ÜK</span><span class="muted" style="font-size:.95rem">ÜK-Schnitt <span class="g ${gcls(uekAvg)}">${gfmt(uekAvg)}</span></span></div>
     <div class="panel tbl-wrap"><table><thead><tr><th>ÜK-Nummer</th><th>Datum</th><th>Eingetragen</th><th class="n">Note</th></tr></thead><tbody>
     ${U.uek.flatMap(u=>u.grades).sort((a,b)=>a.subject.localeCompare(b.subject,'de',{numeric:true})).map(g=>g.grade==null
@@ -744,14 +744,16 @@ function vOverall(){
   const modAvg=meanOf(mods.map(u=>u.avg)), uekAvg=meanOf(ueks.map(u=>u.avg));
   const fachNames=[...new Set(all.filter(g=>(g.kind||'fach')==='fach').map(unitName))].sort((a,b)=>a.localeCompare(b,'de'));
   const fachRows=fachNames.map(n=>{const vals=sems.map(s=>wavg(all.filter(g=>(g.kind||'fach')==='fach'&&g.semesterId===s.id&&unitName(g)===n)));return {n,vals,avg:meanOf(vals)};});
+  const fachSem=sems.map((s,i)=>meanOf(fachRows.map(r=>r.vals[i]))), fachAvg=meanOf(fachRows.map(r=>r.avg));
   const semOf=u=>[...new Set(u.grades.map(g=>semName(g.semesterId)))].join(', ');
   const listTable=(arr,label,avg)=>`<div class="panel tbl-wrap"><div class="section-title" style="font-size:1.15rem">${label}<span class="muted" style="font-size:.95rem">Schnitt <span class="g ${gcls(avg)}">${gfmt(avg)}</span></span></div>
     ${arr.length?`<table><thead><tr><th>${label==='Module'?'Modul':'ÜK'}</th><th>Semester</th><th class="n">Note</th><th class="n">Gerundet</th></tr></thead><tbody>
     ${arr.map(u=>`<tr><td><b>${esc(u.name)}</b>${u.grades.some(isOpenGrade)?' <span class="open-pill">offen</span>':''}</td><td class="muted">${esc(semOf(u))}</td><td class="n g ${gcls(u.avg)}">${gfmt(u.avg)}</td><td class="n">${u.avg!=null?half(u.avg).toFixed(1):'–'}</td></tr>`).join('')}</tbody></table>`:'<div class="empty">Noch keine Einträge.</div>'}</div>`;
   // chart: Modulschnitt + ÜK-Schnitt + jedes Fach pro Semester
   const series=[{name:'Module',color:'var(--accent)',vals:sems.map(s=>meanOf(units(all.filter(g=>g.semesterId===s.id),'modul').map(u=>u.avg))),w:3.5},
+    {name:'Fächerschnitt',color:'#0B8043',vals:fachSem,w:3},
     {name:'ÜKs',color:'#F4511E',vals:sems.map(s=>meanOf(units(all.filter(g=>g.semesterId===s.id),'uek').map(u=>u.avg))),w:2.5},
-    ...fachRows.map((r,i)=>({name:r.n,color:['#0B8043','#8E24AA','#039BE5','#E67C73','#795548','#616161'][i%6],vals:r.vals,w:1.8}))].filter(x=>x.vals.some(v=>v!=null));
+    ...fachRows.map((r,i)=>({name:r.n,color:['#33B679','#8E24AA','#039BE5','#E67C73','#795548','#616161'][i%6],vals:r.vals,w:1.8}))].filter(x=>x.vals.some(v=>v!=null));
   const W=600,H=220,P=34; const X=i=>P+(sems.length<=1?(W-2*P)/2:i*(W-2*P)/(sems.length-1)); const Y=v=>H-P-((v-1)/5)*(H-2*P);
   const chart=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto" role="img" aria-label="Verlauf pro Semester">
     ${[1,2,3,4,5,6].map(v=>`<line x1="${P}" x2="${W-P}" y1="${Y(v)}" y2="${Y(v)}" stroke="${v===4?'var(--bad)':'var(--line)'}" ${v===4?'stroke-dasharray="4 4"':''}/><text x="${P-8}" y="${Y(v)+4}" text-anchor="end" font-size="11" fill="var(--muted)">${v}</text>`).join('')}
@@ -760,12 +762,14 @@ function vOverall(){
   </svg><div style="display:flex;gap:12px;flex-wrap:wrap;font-size:.82rem;margin-top:6px">${series.map(sr=>`<span><span class="dot" style="background:${sr.color};width:9px;height:9px"></span> ${esc(sr.name)}</span>`).join('')}</div>`;
   return `<div class="grid2" style="margin-bottom:16px">
     ${statTile('Modulschnitt (alle Semester)',modAvg,`${mods.filter(u=>u.avg!=null).length} Module · gerundet ${modAvg!=null?(Math.round(modAvg*10)/10).toFixed(1):'–'}`)}
+    ${statTile('Fächerschnitt (alle Semester)',fachAvg,`${fachRows.filter(r=>r.avg!=null).length} Fächer · gerundet ${fachAvg!=null?(Math.round(fachAvg*10)/10).toFixed(1):'–'}`)}
     ${statTile('ÜK-Schnitt (alle Semester)',uekAvg,`${ueks.filter(u=>u.avg!=null).length} ÜKs · gerundet ${uekAvg!=null?(Math.round(uekAvg*10)/10).toFixed(1):'–'}`)}
   </div>
   <div class="panel" style="margin-bottom:16px"><div class="section-title">Verlauf pro Semester</div><div style="max-width:820px">${series.length?chart:'<div class="empty">Noch keine Noten.</div>'}</div></div>
   <div class="grid2" style="margin-bottom:16px">${listTable(mods,'Module',modAvg)}${listTable(ueks,'ÜKs',uekAvg)}</div>
-  <div class="panel tbl-wrap"><div class="section-title" style="font-size:1.15rem">Fächer (jedes einzeln)</div><table><thead><tr><th>Fach</th>${sems.map(s=>`<th class="n">${esc(s.name)}</th>`).join('')}<th class="n">Ø Gesamt</th><th class="n">Gerundet</th></tr></thead>
-    <tbody>${fachRows.map(r=>`<tr><td><b>${esc(r.n)}</b></td>${r.vals.map(v=>`<td class="n g ${gcls(v)}">${gfmt(v)}</td>`).join('')}<td class="n g ${gcls(r.avg)}">${gfmt(r.avg)}</td><td class="n">${r.avg!=null?half(r.avg).toFixed(1):'–'}</td></tr>`).join('')||`<tr><td colspan="${sems.length+3}" class="muted">Noch keine Fachnoten.</td></tr>`}</tbody></table></div>`;
+  <div class="panel tbl-wrap"><div class="section-title" style="font-size:1.15rem">Fächer</div><table><thead><tr><th>Fach</th>${sems.map(s=>`<th class="n">${esc(s.name)}</th>`).join('')}<th class="n">Ø Gesamt</th><th class="n">Gerundet</th></tr></thead>
+    <tbody>${fachRows.map(r=>`<tr><td><b>${esc(r.n)}</b></td>${r.vals.map(v=>`<td class="n g ${gcls(v)}">${gfmt(v)}</td>`).join('')}<td class="n g ${gcls(r.avg)}">${gfmt(r.avg)}</td><td class="n">${r.avg!=null?half(r.avg).toFixed(1):'–'}</td></tr>`).join('')||`<tr><td colspan="${sems.length+3}" class="muted">Noch keine Fachnoten.</td></tr>`}</tbody>
+    ${fachRows.length?`<tfoot><tr><td>Fächerschnitt</td>${fachSem.map(v=>`<td class="n g ${gcls(v)}">${gfmt(v)}</td>`).join('')}<td class="n g ${gcls(fachAvg)}">${gfmt(fachAvg)}</td><td class="n">${fachAvg!=null?(Math.round(fachAvg*10)/10).toFixed(1):'–'}</td></tr></tfoot>`:''}</table></div>`;
 }
 
 const folderById=id=>S.meta.folders.find(f=>f.id===id);
