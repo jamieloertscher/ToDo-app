@@ -114,7 +114,7 @@ nav.tabs button[aria-current="page"]{background:var(--accent);color:var(--accent
 .quick input:focus{outline:none;border-bottom-color:var(--accent)}
 .quick input::placeholder{color:var(--accent);font-weight:700}
 details.donebox summary{cursor:pointer;color:var(--muted);font-weight:700;font-size:.88rem;padding:8px 4px;list-style-position:inside}
-.lists{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(300px,360px);gap:14px;overflow-x:auto;padding-bottom:8px;align-items:start}
+.lists{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:14px;align-items:start}
 .list-col{border-top:4px solid var(--gc)}
 .list-col h3{font-size:1.1rem;display:flex;align-items:center;gap:8px;margin-bottom:6px}
 /* grades */
