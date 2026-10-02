@@ -305,6 +305,9 @@ function ensureDefaults(){
     if(!Array.isArray(it.subtasks)) it.subtasks=[];
   });
 }
+const allowsTasks = g => g && g.tasks!==false;
+const taskGroups = () => S.meta.groups.filter(allowsTasks);
+const defaultTaskGroup = () => (taskGroups().find(g=>!S.meta.settings.hidden.includes(g.id))||taskGroups()[0])?.id||null;
 const grp = id => S.meta.groups.find(g=>g.id===id) || S.meta.groups[0];
 const visible = it => !S.meta.settings.hidden.includes(it.group);
 const gStyle = id => { const g=grp(id); return `--gc:${g.color};--gi:${inkFor(g.color)}`; };
@@ -484,7 +487,7 @@ function groupSidebar(){
   const hid=S.meta.settings.hidden;
   return `<div class="side"><button class="btn primary create" data-act="new" data-day="${ui.selDay}">＋ Erstellen</button>
     <div class="section-title" style="padding:0 6px">Meine Gruppen <button class="icon-btn" data-act="grpNew" aria-label="Gruppe hinzufügen" title="Gruppe hinzufügen">＋</button></div>
-    ${S.meta.groups.map(g=>`<div class="grp" style="--gc:${g.color}"><label><input type="checkbox" data-grpvis="${g.id}" ${hid.includes(g.id)?'':'checked'}><span>${esc(g.name)}</span></label>
+    ${S.meta.groups.map(g=>`<div class="grp" style="--gc:${g.color}"><label><input type="checkbox" data-grpvis="${g.id}" ${hid.includes(g.id)?'':'checked'}><span>${esc(g.name)}${allowsTasks(g)?'':' <span class="muted" style="font-size:.75rem" title="Nur Termine">· nur Termine</span>'}</span></label>
       <button class="icon-btn" data-act="grpEdit" data-id="${g.id}" aria-label="${esc(g.name)} bearbeiten" title="Bearbeiten">✎</button></div>`).join('')}
   </div>`;
 }
@@ -530,7 +533,7 @@ function vCal(){
       <div class="section-title">${esc(parseISO(ui.selDay).toLocaleDateString('de-CH',{weekday:'long',day:'numeric',month:'long'}))}</div>
       ${sel.length?sel.map(x=>x.type==='event'?`<div class="task" style="--gc:${grp(x.group).color}"><span class="dot" style="background:${grp(x.group).color};margin:5px 4px 0"></span><div class="body" data-act="open" data-id="${x.id}"><span class="tt">${x.test?'✎ ':''}${esc(x.title)}</span>${x.test?`<div class="meta">${(()=>{const g=gradeOfTest(x);return g&&g.grade!=null?`Note ${gfmt(g.grade)}`:'Note noch offen';})()}</div>`:''}</div></div>`:taskRow(x,{noSubs:true})).join(''):'<div class="empty">Nichts an diesem Tag.</div>'}
       <div class="section-title" style="margin-top:16px">Offene Aufgaben <span class="muted">${openTasks.length}</span></div>
-      <div class="quick">＋<input placeholder="Aufgabe hinzufügen" data-quick="${S.meta.groups.find(g=>!st.hidden.includes(g.id))?.id||S.meta.groups[0].id}" aria-label="Aufgabe hinzufügen"></div>
+      ${defaultTaskGroup()?`<div class="quick">＋<input placeholder="Aufgabe hinzufügen" data-quick="${defaultTaskGroup()}" aria-label="Aufgabe hinzufügen"></div>`:''}
       ${openTasks.slice(0,12).map(x=>taskRow(x,{showGroup:true,noSubs:true})).join('')||'<div class="empty">Alles erledigt 🎉</div>'}
       ${openTasks.length>12?`<button class="btn small" data-act="tab" data-tab="tasks">Alle ${openTasks.length} ansehen</button>`:''}
     </div>`:''}
@@ -539,13 +542,13 @@ function vCal(){
 
 function vTasks(){
   const hid=S.meta.settings.hidden;
-  const cols=S.meta.groups.filter(g=>!hid.includes(g.id)).map(g=>{
+  const cols=S.meta.groups.filter(g=>!hid.includes(g.id)&&(allowsTasks(g)||S.items.some(i=>i.type==='task'&&i.group===g.id))).map(g=>{
     const its=S.items.filter(i=>i.type==='task'&&i.group===g.id);
     const open=its.filter(i=>!i.done).sort((a,b)=>(a.date||'9').localeCompare(b.date||'9')||a.createdAt.localeCompare(b.createdAt));
     const done=its.filter(i=>i.done);
     return `<div class="panel list-col" style="--gc:${g.color}">
       <h3><span class="dot" style="background:${g.color}"></span><span style="flex:1">${esc(g.name)}</span><button class="icon-btn" data-act="grpEdit" data-id="${g.id}" aria-label="Gruppe bearbeiten">✎</button></h3>
-      <div class="quick">＋<input placeholder="Aufgabe hinzufügen" data-quick="${g.id}" aria-label="Aufgabe zu ${esc(g.name)} hinzufügen"></div>
+      ${allowsTasks(g)?`<div class="quick">＋<input placeholder="Aufgabe hinzufügen" data-quick="${g.id}" aria-label="Aufgabe zu ${esc(g.name)} hinzufügen"></div>`:'<p class="muted" style="font-size:.85rem;margin:4px">Neue Aufgaben sind in dieser Gruppe ausgeschaltet.</p>'}
       ${open.map(i=>taskRow(i)).join('')||'<div class="empty">Keine offenen Aufgaben.</div>'}
       ${done.length?`<details class="donebox"><summary>Erledigt (${done.length})</summary>${done.map(i=>taskRow(i)).join('')}
         <button class="btn small" data-act="clearDone" data-id="${g.id}" style="margin:6px 4px">Erledigte löschen</button></details>`:''}
@@ -715,7 +718,8 @@ let draft=null;
 function openItem(id,preset={}){
   const ex=id?S.items.find(i=>i.id===id):null;
   const defGroup=preset.group||S.meta.groups.find(g=>!S.meta.settings.hidden.includes(g.id))?.id||S.meta.groups[0].id;
-  draft=ex?JSON.parse(JSON.stringify(ex)):{id:null,kind:'fach',type:preset.type||'event',title:'',date:preset.day||'',endDate:'',group:defGroup,desc:'',subtasks:[],done:false,test:false,subject:''};
+  const typ=preset.type||'event'; const dg=typ==='task'&&!allowsTasks(grp(defGroup))?(defaultTaskGroup()||defGroup):defGroup;
+  draft=ex?JSON.parse(JSON.stringify(ex)):{id:null,kind:'fach',type:typ,title:'',date:preset.day||'',endDate:'',group:dg,desc:'',subtasks:[],done:false,test:false,subject:''};
   const g=ex&&ex.test?gradeOfTest(ex):null;
   draft._sem=g?g.semesterId:S.meta.activeSem; draft._weight=g?g.weight:1; draft._grade=g&&g.grade!=null?String(g.grade):'';
   renderDlg(); $('#dlg').showModal(); if(!ex) setTimeout(()=>$('#f_title')?.focus(),30);
@@ -727,7 +731,7 @@ function renderDlg(){
     <div class="full seg" role="group" aria-label="Art">${[['event','Termin'],['task','Aufgabe']].map(([t,l])=>`<button type="button" aria-pressed="${d.type===t}" data-act="dType" data-type="${t}">${l}</button>`).join('')}</div>
     <label>${d.type==='event'?'Datum':'Fällig am'}<input type="date" id="f_date" value="${esc(d.date)}"></label>
     ${d.type==='event'?`<label>Bis (optional)<input type="date" id="f_end" value="${esc(d.endDate||'')}"></label>`:'<span></span>'}
-    <label class="full">Gruppe<select id="f_group">${S.meta.groups.map(x=>`<option value="${x.id}" ${x.id===d.group?'selected':''}>● ${esc(x.name)}</option>`).join('')}</select></label>
+    <label class="full">Gruppe<select id="f_group">${S.meta.groups.filter(x=>d.type!=='task'||allowsTasks(x)||x.id===d.group).map(x=>`<option value="${x.id}" ${x.id===d.group?'selected':''}>● ${esc(x.name)}</option>`).join('')}</select></label>
     ${d.type==='event'?`<label class="full switch"><input type="checkbox" id="f_test" data-act="dTest" ${d.test?'checked':''}> Das ist eine Prüfung – Note im Notentool erfassen</label>`:''}
     ${d.type==='event'&&d.test?`<div class="testbox"><div class="form">
       <div class="full seg" role="group" aria-label="Art der Note">${Object.entries(KINDS).map(([k,l])=>`<button type="button" aria-pressed="${(d.kind||'fach')===k}" data-act="dKind" data-k="${k}">${l}</button>`).join('')}</div>
@@ -817,7 +821,7 @@ function saveGradeDlg(){
 let gdraft=null;
 function openGroup(id){
   const g=id?S.meta.groups.find(x=>x.id===id):null;
-  gdraft={id:g?.id||null,name:g?.name||'',color:g?.color||PALETTE[S.meta.groups.length%PALETTE.length]};
+  gdraft={id:g?.id||null,name:g?.name||'',color:g?.color||PALETTE[S.meta.groups.length%PALETTE.length],tasks:g?allowsTasks(g):true};
   renderGroupDlg(); $('#dlg').showModal(); setTimeout(()=>$('#gr_name')?.focus(),30);
 }
 function renderGroupDlg(){
@@ -827,15 +831,18 @@ function renderGroupDlg(){
     <div class="form"><label class="full">Name<input id="gr_name" value="${esc(gdraft.name)}" placeholder="z.B. Arbeit, Sport, Projekt X"></label>
     <div class="full"><div class="muted" style="font-size:.84rem;font-weight:700;margin-bottom:6px">Farbe</div>
       <div class="swatches">${PALETTE.map(c=>`<button type="button" class="sw" style="background:${c}" aria-pressed="${c.toLowerCase()===gdraft.color.toLowerCase()}" data-act="grColor" data-c="${c}" aria-label="Farbe ${c}"></button>`).join('')}
-      <input type="color" class="sw-custom" id="gr_custom" value="${gdraft.color}" title="Eigene Farbe" aria-label="Eigene Farbe"></div></div></div>
+      <input type="color" class="sw-custom" id="gr_custom" value="${gdraft.color}" title="Eigene Farbe" aria-label="Eigene Farbe"></div></div>
+    <label class="full switch" style="margin-top:6px"><input type="checkbox" id="gr_tasks" ${gdraft.tasks?'checked':''}> Aufgaben in dieser Gruppe erlauben</label>
+    <p class="muted full" style="font-size:.82rem;margin:-6px 0 0 28px">Ausgeschaltet: Die Gruppe ist nur für Termine da und erscheint nicht unter „Aufgaben“.</p></div>
     ${gdraft.id?`<p class="muted" style="font-size:.85rem;margin-top:14px">${n} Einträge in dieser Gruppe.</p>`:''}
   </div><div class="dlg-foot">${gdraft.id&&S.meta.groups.length>1?'<button type="button" class="btn danger" data-act="grpDel" style="margin-right:auto">Gruppe löschen</button>':''}
     <button type="button" class="btn" data-act="closeDlg">Abbrechen</button><button class="btn primary">Speichern</button></div></form>`;
 }
 function saveGroup(){
-  gdraft.name=$('#gr_name').value.trim(); if(!gdraft.name){ toast('Bitte einen Namen eingeben'); return; }
-  if(gdraft.id) Object.assign(S.meta.groups.find(g=>g.id===gdraft.id),{name:gdraft.name,color:gdraft.color});
-  else S.meta.groups.push({id:uid(),name:gdraft.name,color:gdraft.color});
+  gdraft.tasks=$('#gr_tasks').checked; gdraft.name=$('#gr_name').value.trim(); if(!gdraft.name){ toast('Bitte einen Namen eingeben'); return; }
+  if(gdraft.id){ const g=S.meta.groups.find(g=>g.id===gdraft.id); Object.assign(g,{name:gdraft.name,color:gdraft.color,tasks:gdraft.tasks});
+    const n=S.items.filter(i=>i.type==='task'&&!i.done&&i.group===g.id).length; if(!gdraft.tasks&&n) toast(`${n} bestehende Aufgaben bleiben sichtbar, neue kannst du hier nicht mehr anlegen`); }
+  else S.meta.groups.push({id:uid(),name:gdraft.name,color:gdraft.color,tasks:gdraft.tasks});
   mark('meta'); $('#dlg').close(); render();
 }
 async function deleteGroup(){
@@ -968,7 +975,7 @@ document.addEventListener('click',e=>{
   if(act!=='dayNew') e.stopPropagation();
   switch(act){
     case 'tab': ui.tab=a.dataset.tab; render(); break;
-    case 'new': openItem(null,{day:a.dataset.day,type:a.dataset.type}); break;
+    case 'new': if(a.dataset.type==='task'&&!defaultTaskGroup()){ toast('Keine Gruppe erlaubt Aufgaben – schalte es bei einer Gruppe ein'); break; } openItem(null,{day:a.dataset.day,type:a.dataset.type}); break;
     case 'dayNew': if(e.target===a){ ui.selDay=a.dataset.day; openItem(null,{day:a.dataset.day}); } break;
     case 'open': openItem(id); break;
     case 'toggle': toggleTask(id,a.checked); break;
@@ -977,7 +984,8 @@ document.addEventListener('click',e=>{
     case 'calPrev': ui.calMonth=new Date(ui.calMonth.getFullYear(),ui.calMonth.getMonth()-1,1); render(); break;
     case 'calNext': ui.calMonth=new Date(ui.calMonth.getFullYear(),ui.calMonth.getMonth()+1,1); render(); break;
     case 'calToday': ui.calMonth=new Date(new Date().getFullYear(),new Date().getMonth(),1); ui.selDay=todayISO(); render(); break;
-    case 'dType': readDraft(); draft.type=a.dataset.type; renderDlg(); break;
+    case 'dType': readDraft(); if(a.dataset.type==='task'&&!defaultTaskGroup()){ toast('Keine Gruppe erlaubt Aufgaben – schalte es bei einer Gruppe ein'); break; }
+      draft.type=a.dataset.type; if(draft.type==='task'&&!allowsTasks(grp(draft.group))) draft.group=defaultTaskGroup(); renderDlg(); break;
     case 'dTest': readDraft(); renderDlg(); break;
     case 'subToggle': { readDraft(); const s=draft.subtasks.find(x=>x.id===a.dataset.sid); s.done=a.checked; renderDlg(); break; }
     case 'subDel': readDraft(); draft.subtasks=draft.subtasks.filter(x=>x.id!==a.dataset.sid); renderDlg(); break;
@@ -986,7 +994,7 @@ document.addEventListener('click',e=>{
     case 'clearDone': askConfirm('Alle erledigten Aufgaben dieser Gruppe löschen?').then(ok=>{ if(ok){ S.items=S.items.filter(i=>!(i.type==='task'&&i.done&&i.group===id)); mark('items'); render(); } }); break;
     case 'grpNew': openGroup(null); break;
     case 'grpEdit': openGroup(id); break;
-    case 'grColor': gdraft.name=$('#gr_name').value; gdraft.color=a.dataset.c; renderGroupDlg(); break;
+    case 'grColor': gdraft.tasks=$('#gr_tasks').checked; gdraft.name=$('#gr_name').value; gdraft.color=a.dataset.c; renderGroupDlg(); break;
     case 'grpDel': deleteGroup(); break;
     case 'settings': if(loaded) openSettings(); break;
     case 'syncNow': if(pendingSave) pushNow(); else syncNow(); break;
@@ -1029,7 +1037,7 @@ document.addEventListener('change',e=>{
   if(t.id==='hiddenFile'){ uploadFiles([...t.files],ui.folder); t.value=''; return; }
   if(t.dataset.grpvis){ const h=S.meta.settings.hidden; const i=h.indexOf(t.dataset.grpvis); if(t.checked&&i>-1) h.splice(i,1); if(!t.checked&&i<0) h.push(t.dataset.grpvis); mark('meta'); render(); }
   if(t.dataset.semname){ const s=S.meta.semesters.find(x=>x.id===t.dataset.semname); if(s&&t.value.trim()){ s.name=t.value.trim(); mark('meta'); } }
-  if(t.id==='gr_custom'){ gdraft.name=$('#gr_name').value; gdraft.color=t.value; renderGroupDlg(); }
+  if(t.id==='gr_custom'){ gdraft.tasks=$('#gr_tasks').checked; gdraft.name=$('#gr_name').value; gdraft.color=t.value; renderGroupDlg(); }
   if(t.id==='set_accent'){ S.meta.settings.accent=t.value; applySettings(); mark('meta'); openSettings(); }
 });
 document.addEventListener('input',e=>{ if(e.target.dataset.input==='docQ'){ ui.docQ=e.target.value; const pos=e.target.selectionStart; render(); const i=document.querySelector('[data-input="docQ"]'); i.focus(); i.setSelectionRange(pos,pos); } });
