@@ -943,6 +943,7 @@ function openItem(id,preset={}){
 function renderDlg(){
   const d=draft, ex=d.id?S.items.find(i=>i.id===d.id):null, g=ex&&ex.test?gradeOfTest(ex):null;
   $('#dlg').innerHTML=`<form method="dialog" id="itemForm"><div class="dlg-body"><div class="form">
+    ${d.gcal?`<p class="full" style="margin:0;padding:8px 10px;border-radius:8px;background:var(--accent-soft);font-size:.85rem">📅 Aus Google Kalender. Titel, Datum und Beschreibung änderst oder löschst du dort – Änderungen hier werden beim nächsten Sync überschrieben. Als Prüfung markieren geht hier oder im Add-on.</p>`:''}
     <input class="full title-in" id="f_title" value="${esc(d.title)}" placeholder="Titel hinzufügen" aria-label="Titel">
     <div class="full seg" role="group" aria-label="Art">${[['event','Termin'],['task','Aufgabe']].map(([t,l])=>`<button type="button" aria-pressed="${d.type===t}" data-act="dType" data-type="${t}">${l}</button>`).join('')}</div>
     <label>${d.type==='event'?'Datum':'Fällig am'}<input type="date" id="f_date" value="${esc(d.date)}"></label>
@@ -1239,7 +1240,7 @@ function renderPeek(){
     ${testInfo}
     ${it.desc?`<div class="peek-row"><span class="ic">≡</span><div class="tx">${esc(it.desc)}</div></div>`:''}
     ${it.type==='task'&&it.subtasks?.length?`<div class="peek-row"><span class="ic">☑</span><div>${it.subtasks.map(sb=>`<div class="sub ${sb.done?'done':''}" style="--gc:${g.color}"><input type="checkbox" class="tcheck sm" data-act="peekSub" data-sid="${sb.id}" ${sb.done?'checked':''} aria-label="${esc(sb.title)}"><span>${esc(sb.title)}</span></div>`).join('')}</div></div>`:''}
-    <div class="peek-row"><span class="ic">▣</span><div>${esc(g.name)}</div></div>`;
+    <div class="peek-row"><span class="ic">▣</span><div>${esc(g.name)}${it.gcal?' <span class="muted" style="font-size:.85rem">· aus Google Kalender</span>':''}</div></div>`;
   p.hidden=false;
   // neben dem angeklickten Eintrag platzieren
   if(innerWidth>600&&peek.rect){ const r=peek.rect, pw=p.offsetWidth, ph=p.offsetHeight, m=12;
