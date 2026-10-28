@@ -388,7 +388,7 @@ const S = {
 };
 
 let loaded=false;
-const ui={ folder:null, docQ:'', tab:'cal', calMonth:new Date(new Date().getFullYear(),new Date().getMonth(),1), selDay:todayISO(), gradeView:null };
+const ui={ folder:null, docQ:'', tab:'grades', calMonth:new Date(new Date().getFullYear(),new Date().getMonth(),1), selDay:todayISO(), gradeView:null };
 
 function ensureDefaults(){
   if(!S.meta||typeof S.meta!=='object') S.meta={};
@@ -637,7 +637,8 @@ const TAB_ICONS={"cal": "<svg viewBox=\"0 0 24 24\" width=\"22\" height=\"22\" f
 const isMobile=()=>matchMedia('(max-width:700px)').matches;
 function renderTabs(){
   const n=loaded?openGradeCount():0;
-  $('#tabs').innerHTML=[['cal','Kalender'],['tasks','Aufgaben'],['grades','Noten'],['docs','Dokumente']]
+  if(ui.tab!=='grades'&&ui.tab!=='docs') ui.tab='grades';
+  $('#tabs').innerHTML=[['grades','Noten'],['docs','Dokumente']]
     .map(([k,l])=>`<button data-tab="${k}" aria-current="${ui.tab===k?'page':'false'}"><span class="ti">${TAB_ICONS[k]}</span><span class="tl">${l}</span>${k==='grades'&&n?`<span class="badge" title="${n} Noten offen">${n}</span>`:''}</button>`).join('');
   const fab=$('#fab'); if(fab&&loaded){ const map={cal:['new','event','Neuer Termin'],tasks:['new','task','Neue Aufgabe'],grades:['newGrade','','Neue Note'],docs:['pickFiles','','Datei hochladen']}[ui.tab];
     fab.dataset.act=map[0]; fab.dataset.type=map[1]; fab.dataset.day=ui.tab==='cal'?ui.selDay:''; fab.setAttribute('aria-label',map[2]); fab.title=map[2]; fab.hidden=false; }
