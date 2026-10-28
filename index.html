@@ -943,7 +943,6 @@ function openItem(id,preset={}){
 function renderDlg(){
   const d=draft, ex=d.id?S.items.find(i=>i.id===d.id):null, g=ex&&ex.test?gradeOfTest(ex):null;
   $('#dlg').innerHTML=`<form method="dialog" id="itemForm"><div class="dlg-body"><div class="form">
-    ${d.gcal?`<p class="full" style="margin:0;padding:8px 10px;border-radius:8px;background:var(--accent-soft);font-size:.85rem">📅 Aus Google Kalender. Titel, Datum und Beschreibung änderst oder löschst du dort – Änderungen hier werden beim nächsten Sync überschrieben. Als Prüfung markieren geht hier oder im Add-on.</p>`:''}
     <input class="full title-in" id="f_title" value="${esc(d.title)}" placeholder="Titel hinzufügen" aria-label="Titel">
     <div class="full seg" role="group" aria-label="Art">${[['event','Termin'],['task','Aufgabe']].map(([t,l])=>`<button type="button" aria-pressed="${d.type===t}" data-act="dType" data-type="${t}">${l}</button>`).join('')}</div>
     <label>${d.type==='event'?'Datum':'Fällig am'}<input type="date" id="f_date" value="${esc(d.date)}"></label>
@@ -1107,6 +1106,7 @@ function openSettings(){
     <div class="set-row"><div><b>Gruppen, Fächer & Semester</b></div><div style="display:flex;gap:6px"><button class="btn small" data-act="grpNew">＋ Gruppe</button><button class="btn small" data-act="manage">Noten-Kategorien</button></div></div>
     <div class="set-row"><div><b>Speicher</b><span class="muted" style="font-size:.85rem;display:block">GitHub: ${esc(cfg?.owner||'')}/${esc(cfg?.repo||'')}</span></div><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn small" data-act="syncNow">⟳ Jetzt synchronisieren</button><button class="btn small danger" data-act="logout">Abmelden</button></div></div>
     <div class="set-row"><div><b>Daten importieren</b><span class="muted" style="font-size:.85rem;display:block">Exportdatei aus der Claude-Version (mein-heft-export.json)</span></div><label class="btn small" style="cursor:pointer">Datei wählen<input type="file" id="importFile" accept="application/json,.json" hidden></label></div>
+    ${S.items.some(i=>i.gcal)?`<div class="set-row"><div><b>Google-Kalender-Termine entfernen</b><span class="muted" style="font-size:.85rem;display:block">Entfernt die vom Kalender-Sync übernommenen Termine und automatisch erzeugten Prüfungen. Deine eigenen Einträge und Noten bleiben.</span></div><button class="btn small danger" data-act="cleanupGcal">Aufräumen</button></div>`:''}
   </div><div class="dlg-foot"><button class="btn primary" data-act="closeDlg">Fertig</button></div>`;
   if(!$('#dlg').open) $('#dlg').showModal();
 }
@@ -1240,7 +1240,7 @@ function renderPeek(){
     ${testInfo}
     ${it.desc?`<div class="peek-row"><span class="ic">≡</span><div class="tx">${esc(it.desc)}</div></div>`:''}
     ${it.type==='task'&&it.subtasks?.length?`<div class="peek-row"><span class="ic">☑</span><div>${it.subtasks.map(sb=>`<div class="sub ${sb.done?'done':''}" style="--gc:${g.color}"><input type="checkbox" class="tcheck sm" data-act="peekSub" data-sid="${sb.id}" ${sb.done?'checked':''} aria-label="${esc(sb.title)}"><span>${esc(sb.title)}</span></div>`).join('')}</div></div>`:''}
-    <div class="peek-row"><span class="ic">▣</span><div>${esc(g.name)}${it.gcal?' <span class="muted" style="font-size:.85rem">· aus Google Kalender</span>':''}</div></div>`;
+    <div class="peek-row"><span class="ic">▣</span><div>${esc(g.name)}</div></div>`;
   p.hidden=false;
   // neben dem angeklickten Eintrag platzieren
   if(innerWidth>600&&peek.rect){ const r=peek.rect, pw=p.offsetWidth, ph=p.offsetHeight, m=12;
@@ -1293,6 +1293,15 @@ document.addEventListener('click',e=>{
     case 'grpDel': deleteGroup(); break;
     case 'settings': if(loaded) openSettings(); break;
     case 'syncNow': if(pendingSave) pushNow(); else syncNow(); break;
+    case 'cleanupGcal': (()=>{
+      const del=new Set(), keep=[];
+      S.items.forEach(i=>{ if(!i.gcal) return; const g=S.grades.find(x=>x.testId===i.id);
+        if((i.test&&i.testManual)||(g&&g.grade!=null)||(i.createdAt&&i.createdAt<'2026-10-28')) keep.push(i); else del.add(i.id); });
+      askConfirm(`${del.size} übernommene Termine entfernen? ${keep.length} Einträge (deine eigenen oder mit Note) bleiben.`,'Aufräumen').then(ok=>{ if(!ok) return;
+        S.items=S.items.filter(i=>!del.has(i.id));
+        S.grades=S.grades.filter(g=>!(del.has(g.testId)&&g.grade==null)); S.grades.forEach(g=>{ if(del.has(g.testId)) g.testId=null; });
+        keep.forEach(i=>{ delete i.gcal; delete i.testAuto; delete i.testManual; delete i.time; });
+        mark('items','grades'); $('#dlg').close(); render(); toast(`${del.size} Termine entfernt`); }); })(); break;
     case 'logout': askConfirm('Auf diesem Gerät abmelden? Deine Daten bleiben im GitHub-Repo.','Abmelden').then(ok=>{ if(ok) logout(); }); break;
 
     case 'setOpt': { let v=a.dataset.v; if(v==='true') v=true; else if(v==='false') v=false; else if(/^\d$/.test(v)) v=+v; S.meta.settings[a.dataset.k]=v; applySettings(); mark('meta'); openSettings(); render(); break; }
